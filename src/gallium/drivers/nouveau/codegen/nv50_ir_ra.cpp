@@ -459,6 +459,7 @@ RegAlloc::PhiMovesPass::visit(BasicBlock *bb)
          mov->setSrc(0, phi->getSrc(j));
          mov->setDef(0, tmp);
          phi->setSrc(j, tmp);
+         mov->fixed = 1;
 
          pb->insertBefore(pb->getExit(), mov);
       }
@@ -1722,6 +1723,12 @@ RegAlloc::execFunc()
    unsigned int i, retries;
    bool ret;
 
+   if (prog->dbgFlags & NV50_IR_DEBUG_SCHEDULE)
+      func->print();
+   func->orderInstructions();
+   if (prog->dbgFlags & NV50_IR_DEBUG_SCHEDULE)
+      func->print();
+
    if (!func->ins.empty()) {
       // Insert a nop at the entry so inputs only used by the first instruction
       // don't count as having an empty live range.
@@ -1760,7 +1767,13 @@ RegAlloc::execFunc()
          BasicBlock::get(bi)->liveSet.marker = false;
       if (!ret)
          break;
-      func->orderInstructions(this->insns);
+
+      this->insns.clear();
+      for (IteratorRef it = func->cfg.iteratorCFG(); !it->end(); it->next()) {
+         BasicBlock *bb = BasicBlock::get(reinterpret_cast<Graph::Node *>(it->get()));
+         for (Instruction *insn = bb->getFirst(); insn; insn = insn->next)
+            this->insns.insert(insn, insn->serial);
+      }
 
       ret = buildIntervals.run(func);
       if (!ret)
@@ -2211,9 +2224,10 @@ RegAlloc::InsertConstraintsPass::insertConstraintMoves()
 
             Instruction *defi = cst->getSrc(s)->defs.front()->getInsn();
             // catch some cases where don't really need MOVs
+/*
             if (cst->getSrc(s)->refCount() == 1 && !defi->constrainedDefs())
                continue;
-
+*/
             LValue *lval = new_LValue(func, cst->src(s).getFile());
             lval->reg.size = size;
 

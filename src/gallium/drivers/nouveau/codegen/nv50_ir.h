@@ -1069,7 +1069,7 @@ public:
    bool setEntry(BasicBlock *);
    bool setExit(BasicBlock *);
 
-   unsigned int orderInstructions(ArrayList&);
+   void orderInstructions();
 
    inline void add(BasicBlock *bb, int& id) { allBBlocks.insert(bb, id); }
    inline void add(Instruction *insn, int& id) { allInsns.insert(insn, id); }

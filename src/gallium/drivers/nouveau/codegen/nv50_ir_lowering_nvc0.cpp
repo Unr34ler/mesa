@@ -293,7 +293,12 @@ NVC0LegalizePostRA::insertTextureBarriers(Function *fn)
    std::vector<TexUse> useVec;
    ArrayList insns;
 
-   fn->orderInstructions(insns);
+   insns.clear();
+   for (IteratorRef it = fn->cfg.iteratorCFG(); !it->end(); it->next()) {
+      BasicBlock *bb = BasicBlock::get(reinterpret_cast<Graph::Node *>(it->get()));
+      for (Instruction *insn = bb->getFirst(); insn; insn = insn->next)
+         insns.insert(insn, insn->serial);
+   }
 
    texCounts.resize(fn->allBBlocks.getSize(), 0);
    bbFirstTex.resize(fn->allBBlocks.getSize(), insns.getSize());

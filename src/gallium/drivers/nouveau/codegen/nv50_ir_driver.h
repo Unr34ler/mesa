@@ -63,10 +63,12 @@ struct nv50_ir_varying
 # define NV50_IR_DEBUG_BASIC     (1 << 0)
 # define NV50_IR_DEBUG_VERBOSE   (2 << 0)
 # define NV50_IR_DEBUG_REG_ALLOC (1 << 2)
+# define NV50_IR_DEBUG_SCHEDULE  (1 << 3)
 #else
 # define NV50_IR_DEBUG_BASIC     0
 # define NV50_IR_DEBUG_VERBOSE   0
 # define NV50_IR_DEBUG_REG_ALLOC 0
+# define NV50_IR_DEBUG_SCHEDULE  0
 #endif
 
 struct nv50_ir_prog_symbol

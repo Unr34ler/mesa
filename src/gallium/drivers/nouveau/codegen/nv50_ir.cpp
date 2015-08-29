@@ -29,6 +29,8 @@ extern "C" {
 #include "nv50/nv50_program.h"
 }
 
+#include <iostream>
+
 namespace nv50_ir {
 
 Modifier::Modifier(operation op)
@@ -1220,6 +1222,7 @@ nv50_ir_generate_code(struct nv50_ir_prog_info *info)
       ret = -5;
       goto out;
    }
+   std::cout << "max reg usage: " << prog->maxGPR << std::endl;
 
 out:
    INFO_DBG(prog->dbgFlags, VERBOSE, "nv50_ir_generate_code: ret = %i\n", ret);

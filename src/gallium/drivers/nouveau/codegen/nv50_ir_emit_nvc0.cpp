@@ -22,6 +22,8 @@
 
 #include "codegen/nv50_ir_target_nvc0.h"
 
+#include <iostream>
+
 namespace nv50_ir {
 
 // Argh, all these assertions ...
