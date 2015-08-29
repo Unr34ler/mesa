@@ -1776,6 +1776,7 @@ GCRA::resolveSplitsAndMerges()
         it != merges.end();
         ++it) {
       Instruction *merge = *it;
+      assert(merge->getDef(0)->reg.data.id >= 0);
       unsigned int reg = regs.idToBytes(merge->getDef(0));
       for (int s = 0; merge->srcExists(s); ++s) {
          Value *v = merge->getSrc(s);
