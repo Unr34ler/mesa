@@ -2288,7 +2288,8 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
          data[0] |= insn->sched << 28;
          data[1] |= insn->sched >> 4;
       } else {
-         data[1] |= insn->sched << ((id - 4) * 8 + 4);
+         uint32_t schedData = (id == 6 && insn->sched == 0x04) ? insn->sched2 : insn->sched;
+         data[1] |= schedData << ((id - 4) * 8 + 4);
       }
    }
 
@@ -2776,16 +2777,18 @@ SchedDataCalculator::setDelay(Instruction *insn, int delay, Instruction *next)
    } else
    if (insn->op == OP_JOIN || insn->join) {
       insn->sched = 0x00;
-   } else
-   if (delay >= 0 || prevData == 0x04 ||
-       !next || !targ->canDualIssue(insn, next)) {
-      insn->sched = static_cast<uint8_t>(MAX2(delay, 0));
-      if (prevOp == OP_EXPORT)
-         insn->sched |= 0x40;
-      else
-         insn->sched |= 0x20;
    } else {
-      insn->sched = 0x04; // dual-issue
+      insn->sched2 = static_cast<uint8_t>(MAX2(delay, 0));
+      if (prevOp == OP_EXPORT)
+         insn->sched2 |= 0x40;
+      else
+         insn->sched2 |= 0x20;
+      if (delay >= 0 || prevData == 0x04 ||
+          !next || !targ->canDualIssue(insn, next)) {
+         insn->sched = insn->sched2;
+      } else {
+         insn->sched = 0x04; // dual-issue
+      }
    }
 
    if (prevData != 0x04 || prevOp != OP_EXPORT)

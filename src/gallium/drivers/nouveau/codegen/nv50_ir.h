@@ -803,6 +803,7 @@ public:
    int8_t flagsSrc;
 
    uint32_t sched; // scheduling data (NOTE: maybe move to separate storage)
+   uint32_t sched2;
 
    BasicBlock *bb;
 
