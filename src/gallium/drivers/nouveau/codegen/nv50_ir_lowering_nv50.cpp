@@ -1291,7 +1291,17 @@ NV50LoweringPreSSA::handleEXPORT(Instruction *i)
 bool
 NV50LoweringPreSSA::handleLOAD(Instruction *i)
 {
-   ValueRef src = i->src(0);
+   ValueRef &src = i->src(0);
+
+   if (prog->getType() == Program::TYPE_COMPUTE) {
+      /* a[] is only available in vertex and geometry programs. For compute
+       * ones, input parameters need to be loaded from s[]. */
+      if (src.getFile() == FILE_SHADER_INPUT) {
+         Symbol *symb = bld.mkSymbol(nv50_ir::FILE_MEMORY_SHARED, 0, i->dType,
+                                     prog->driver->prop.cp.inputOffset);
+         src.set(symb);
+      }
+   }
 
    if (src.isIndirect(1)) {
       assert(prog->getType() == Program::TYPE_GEOMETRY);
