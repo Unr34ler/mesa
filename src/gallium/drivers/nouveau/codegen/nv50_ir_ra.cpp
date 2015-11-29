@@ -2187,7 +2187,8 @@ RegAlloc::InsertConstraintsPass::texConstraintNV50(TexInstruction *tex)
    if (pred)
       tex->setPredicate(tex->cc, NULL);
 
-   textureMask(tex);
+   if (isTextureOp(tex->op))
+      textureMask(tex);
 
    assert(tex->defExists(0) && tex->srcExists(0));
    // make src and def count match
