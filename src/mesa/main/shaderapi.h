@@ -66,6 +66,10 @@ _mesa_AttachObjectARB(GLhandleARB, GLhandleARB);
 extern void  GLAPIENTRY
 _mesa_CompileShader(GLuint);
 
+extern void GLAPIENTRY
+_mesa_CompileShaderIncludeARB(GLuint shaderObj, GLsizei count,
+                              const GLchar *const *path, const GLint *length);
+
 extern GLhandleARB GLAPIENTRY
 _mesa_CreateProgramObjectARB(void);
 
@@ -74,6 +78,9 @@ _mesa_CreateShaderObjectARB(GLenum type);
 
 extern void GLAPIENTRY
 _mesa_DeleteObjectARB(GLhandleARB obj);
+
+extern void GLAPIENTRY
+_mesa_DeleteNamedStringARB(GLint namelen, const GLchar *name);
 
 extern void GLAPIENTRY
 _mesa_DetachObjectARB(GLhandleARB, GLhandleARB);
@@ -94,6 +101,14 @@ extern void GLAPIENTRY
 _mesa_GetInfoLogARB(GLhandleARB, GLsizei, GLsizei *, GLcharARB *);
 
 extern void GLAPIENTRY
+_mesa_GetNamedStringARB(GLint namelen, const GLchar *name, GLsizei bufSize,
+                        GLint *stringlen, GLchar *string);
+
+extern void GLAPIENTRY
+_mesa_GetNamedStringivARB(GLint namelen, const GLchar *name,
+                          GLenum pname, GLint *params);
+
+extern void GLAPIENTRY
 _mesa_GetObjectParameterfvARB(GLhandleARB, GLenum, GLfloat *);
 
 extern void GLAPIENTRY
@@ -103,6 +118,9 @@ extern void GLAPIENTRY
 _mesa_GetShaderSource(GLuint, GLsizei, GLsizei *, GLchar *);
 
 extern GLboolean GLAPIENTRY
+_mesa_IsNamedStringARB(int namelen, const char *name);
+
+extern GLboolean GLAPIENTRY
 _mesa_IsProgram(GLuint name);
 
 extern GLboolean GLAPIENTRY
@@ -110,6 +128,10 @@ _mesa_IsShader(GLuint name);
 
 extern void GLAPIENTRY
 _mesa_LinkProgram(GLuint programObj);
+
+extern void GLAPIENTRY
+_mesa_NamedStringARB(GLenum type, GLint namelen, const GLchar *name,
+                     GLint stringlen, const GLchar *string);
 
 extern void GLAPIENTRY
 _mesa_ShaderSource(GLuint, GLsizei, const GLchar* const *, const GLint *);
