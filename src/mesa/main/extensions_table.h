@@ -112,6 +112,7 @@ EXT(ARB_shader_texture_image_samples        , ARB_shader_texture_image_samples  
 EXT(ARB_shader_texture_lod                  , ARB_shader_texture_lod                 , GLL, GLC,  x ,  x , 2009)
 EXT(ARB_shading_language_100                , dummy_true                             , GLL,  x ,  x ,  x , 2003)
 EXT(ARB_shading_language_420pack            , ARB_shading_language_420pack           , GLL, GLC,  x ,  x , 2011)
+EXT(ARB_shading_language_include            , dummy_true                             , GLL, GLC,  x ,  x , 2010)
 EXT(ARB_shading_language_packing            , ARB_shading_language_packing           , GLL, GLC,  x ,  x , 2011)
 EXT(ARB_shadow                              , ARB_shadow                             , GLL,  x ,  x ,  x , 2001)
 EXT(ARB_stencil_texturing                   , ARB_stencil_texturing                  , GLL, GLC,  x ,  x , 2012)
