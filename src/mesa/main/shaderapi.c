@@ -1268,6 +1268,13 @@ _mesa_CompileShader(GLuint shaderObj)
 }
 
 
+void GLAPIENTRY
+_mesa_CompileShaderIncludeARB(GLuint shaderObj, GLsizei count,
+                              const GLchar *const *path, const GLint *length)
+{
+}
+
+
 GLuint GLAPIENTRY
 _mesa_CreateShader(GLenum type)
 {
@@ -1325,6 +1332,12 @@ _mesa_DeleteObjectARB(GLhandleARB obj)
          /* error? */
       }
    }
+}
+
+
+void GLAPIENTRY
+_mesa_DeleteNamedStringARB(GLint namelen, const GLchar *name)
+{
 }
 
 
@@ -1398,6 +1411,20 @@ _mesa_GetInfoLogARB(GLhandleARB object, GLsizei maxLength, GLsizei * length,
    else {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetInfoLogARB");
    }
+}
+
+
+void GLAPIENTRY
+_mesa_GetNamedStringARB(GLint namelen, const GLchar *name, GLsizei bufSize,
+                        GLint *stringlen, GLchar *string)
+{
+}
+
+
+void GLAPIENTRY
+_mesa_GetNamedStringivARB(GLint namelen, const GLchar *name,
+                          GLenum pname, GLint *params)
+{
 }
 
 
@@ -1490,6 +1517,13 @@ _mesa_GetHandleARB(GLenum pname)
 
 
 GLboolean GLAPIENTRY
+_mesa_IsNamedStringARB(int namelen, const char *name)
+{
+   return GL_FALSE;
+}
+
+
+GLboolean GLAPIENTRY
 _mesa_IsProgram(GLuint name)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -1513,6 +1547,13 @@ _mesa_LinkProgram(GLuint programObj)
       _mesa_debug(ctx, "glLinkProgram %u\n", programObj);
    _mesa_link_program(ctx, _mesa_lookup_shader_program_err(ctx, programObj,
                                                            "glLinkProgram"));
+}
+
+
+void GLAPIENTRY
+_mesa_NamedStringARB(GLenum type, GLint namelen, const GLchar *name,
+                     GLint stringlen, const GLchar *string)
+{
 }
 
 #if defined(HAVE_SHA1)
