@@ -1284,6 +1284,255 @@ _mesa_include_node_free_all(void)
 }
 
 
+static GLchar **
+include_node_name_to_token(const GLint namelen, const GLchar *name)
+{
+   GLchar *str, *tok, *saveptr, **result, **temp;
+   GLsizei count = 0, len = namelen < 0 ? strlen(name) : namelen;
+
+   saveptr = str = malloc(len);
+   if (!str)
+      return NULL;
+
+   strncpy(str, &name[1], --len);
+   str[len] = '\0';
+
+   result = malloc(sizeof(tok) * (count + 1));
+   if (!result) {
+      free(str);
+      return NULL;
+   }
+
+   tok = strsep(&saveptr, "/");
+   while (tok != NULL && result) {
+      result[count++] = tok;
+
+      temp = realloc(result, sizeof(tok) * (count + 1));
+      if (temp) {
+         result = temp;
+         tok = strsep(&saveptr, "/");
+      } else {
+         free(result);
+         result = NULL;
+      }
+   }
+
+   if (result) {
+      result[count] = NULL;
+      return result;
+   }
+
+   free(str);
+   return NULL;
+}
+
+
+static void
+include_node_free_token(GLchar **token)
+{
+	free(*token);
+	free(token);
+}
+
+
+static struct gl_include_node *
+include_node_add_child(struct gl_include_node *parent, const GLchar *childName)
+{
+   struct gl_include_node *node, **temp;
+   GLsizei len = strlen(childName) + 1;
+
+   node = CALLOC_STRUCT(gl_include_node);
+   if (!node)
+      return NULL;
+
+   node->Name = malloc(len);
+   if (!node->Name) {
+      free(node);
+      return NULL;
+   }
+   _mesa_copy_string(node->Name, len, NULL, childName);
+
+   node->Parent = parent;
+
+   temp = realloc(parent->Children, sizeof(node) * (parent->ChildCount + 1));
+   if (temp) {
+      parent->Children = temp;
+      parent->Children[parent->ChildCount] = node;
+      parent->ChildCount++;
+   } else {
+      free(node->Name);
+      free(node);
+      node = NULL;
+   }
+
+   return node;
+}
+
+
+static void
+include_node_delete_child(struct gl_include_node *child)
+{
+   GLuint i, t;
+   struct gl_include_node *parent = child->Parent;
+
+   if (parent->ChildCount > 1) {
+      for (i = 0, t = 0; i < parent->ChildCount; i++) {
+         if (parent->Children[i] != child)
+            parent->Children[t++] = parent->Children[i];
+      }
+      parent->ChildCount--;
+      parent->Children[parent->ChildCount] = NULL;
+   } else {
+      free(parent->Children);
+      parent->Children = NULL;
+      parent->ChildCount = 0;
+   }
+
+   free(child->Name);
+   free(child);
+}
+
+
+static struct gl_include_node *
+include_node_next_node(struct gl_include_node *current, const GLchar *tokenName)
+{
+   GLuint i;
+   struct gl_include_node *result = NULL;
+
+   if (strcmp(".", tokenName) == 0)
+      return current;
+
+   if (strcmp("..", tokenName) == 0) {
+      if (current->Parent)
+         return current->Parent;
+      else
+         return current;
+   }
+
+   for (i = 0; i < current->ChildCount && !result; i++)
+      if (strcmp(tokenName, current->Children[i]->Name) == 0)
+         result = current->Children[i];
+
+   return result;
+}
+
+
+static struct gl_include_node *
+include_node_find(const GLint namelen, const GLchar *name)
+{
+   struct gl_include_node *result = include_root;
+   GLchar **it, **tokArray = include_node_name_to_token(namelen, name);
+
+   if (!tokArray)
+      return NULL;
+
+   it = tokArray;
+   while (*it && result) {
+      result = include_node_next_node(result, *it);
+      it++;
+   }
+
+   include_node_free_token(tokArray);
+
+   return result;
+}
+
+
+static void
+include_node_remove_tree(const GLint namelen, const GLchar *name)
+{
+   struct gl_include_node *current, *next;
+   GLchar **it, **tokArray = include_node_name_to_token(namelen, name);
+
+   if (!tokArray)
+      return;
+
+   it = tokArray;
+   current = next = include_root;
+   while (*it && next && current) {
+      next = include_node_next_node(current, *it);
+      if (next)
+         current = next;
+      it++;
+   }
+
+   while(current->ChildCount == 0 && current->Parent && current->IncludeString == NULL) {
+      next = current->Parent;
+      include_node_delete_child(current);
+      current = next;
+   }
+
+   include_node_free_token(tokArray);
+}
+
+
+static struct gl_include_node *
+include_node_create_tree(const GLint namelen, const GLchar *name)
+{
+   struct gl_include_node *node = include_root, *temp;
+   GLchar **it, **tokArray = include_node_name_to_token(namelen, name);
+
+   if (!tokArray)
+      return NULL;
+
+   it = tokArray;
+   while (*it && node) {
+     temp = include_node_next_node(node, *it);
+      node = temp ? temp : include_node_add_child(node, *it);
+      it++;
+   }
+
+   include_node_free_token(tokArray);
+
+   if (!node)
+      include_node_remove_tree(namelen, name);
+
+   return node;
+}
+
+
+static bool
+include_node_validate_char(const GLchar c)
+{
+   if (c >= 'a' && c <= 'z')
+      return true;
+   if (c >= 'A' && c <= 'Z')
+      return true;
+   if (c >= '0' && c <= '9')
+      return true;
+   return c == '_' || c == '.' || c == '+' || c == '-' || c == '/'
+       || c == '*' || c == '%' || c == '[' || c == ']' || c == '('
+       || c == ')' || c == '{' || c == '}' || c == '^' || c == '|'
+       || c == '&' || c == '~' || c == '=' || c == '!' || c == ':'
+       || c == ';' || c == ',' || c == '?' || c == ' ';
+}
+
+
+static GLboolean
+include_node_validate_name(const GLint namelen, const GLchar *name)
+{
+   bool lastCharSlash = true;
+   size_t i, len;
+
+   if (name == NULL)
+      return GL_FALSE;
+
+   len = namelen < 0 ? strlen(name) : namelen;
+   if (len == 0 || name[0] != '/' || name[len - 1] == '/')
+      return GL_FALSE;
+
+   for (i = 1; i < len; i++) {
+      if (lastCharSlash && name[i] == '/')
+         return GL_FALSE;
+      if (!include_node_validate_char(name[i]))
+         return GL_FALSE;
+      lastCharSlash = (name[i] == '/');
+   }
+
+   return GL_TRUE;
+}
+
+
 
 void GLAPIENTRY
 _mesa_AttachObjectARB(GLhandleARB program, GLhandleARB shader)
@@ -1382,6 +1631,26 @@ _mesa_DeleteObjectARB(GLhandleARB obj)
 void GLAPIENTRY
 _mesa_DeleteNamedStringARB(GLint namelen, const GLchar *name)
 {
+   struct gl_include_node *node;
+   GET_CURRENT_CONTEXT(ctx);
+   if (!include_node_validate_name(namelen, name)) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "DeleteNamedStringARB(invalid name)");
+      return;
+   }
+
+   mtx_lock(&include_mutex);
+
+   node = include_node_find(namelen, name);
+   if (! node || !node->IncludeString) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "DeleteNamedStringARB(no associated string)");
+   } else {
+      free(node->IncludeString);
+      node->IncludeString = NULL;
+      node->StringLen = 0;
+   }
+   include_node_remove_tree(namelen, name);
+
+   mtx_unlock(&include_mutex);
 }
 
 
@@ -1462,6 +1731,28 @@ void GLAPIENTRY
 _mesa_GetNamedStringARB(GLint namelen, const GLchar *name, GLsizei bufSize,
                         GLint *stringlen, GLchar *string)
 {
+   struct gl_include_node *node;
+   GLint size;
+   GET_CURRENT_CONTEXT(ctx);
+   if (!include_node_validate_name(namelen, name)) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetNamedStringARB(invalid name)");
+      return;
+   }
+
+   mtx_lock(&include_mutex);
+
+   node = include_node_find(namelen, name);
+   if (!node || !node->IncludeString) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetNamedStringARB(no associated string)");
+   } else {
+      size = (bufSize < node->StringLen ? bufSize : node->StringLen);
+      if (string && size > 0)
+         _mesa_copy_string(string, size, stringlen, node->IncludeString);
+      else if (stringlen)
+         *stringlen = 0;
+   }
+
+   mtx_unlock(&include_mutex);
 }
 
 
@@ -1469,6 +1760,31 @@ void GLAPIENTRY
 _mesa_GetNamedStringivARB(GLint namelen, const GLchar *name,
                           GLenum pname, GLint *params)
 {
+   struct gl_include_node *node;
+   GET_CURRENT_CONTEXT(ctx);
+   if (pname != GL_NAMED_STRING_LENGTH_ARB && pname != GL_NAMED_STRING_TYPE_ARB) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetNamedStringivARB(invalid type %s)",
+                  _mesa_enum_to_string(pname));
+      return;
+   }
+   if (!include_node_validate_name(namelen, name)) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetNamedStringivARB(invalid name)");
+      return;
+   }
+
+   mtx_lock(&include_mutex);
+
+   node = include_node_find(namelen, name);
+   if (!node || !node->IncludeString) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetNamedStringivARB(no associated string)");
+   } else if (params) {
+      if (pname == GL_NAMED_STRING_LENGTH_ARB)
+         *params = node->StringLen;
+      else if (pname == GL_NAMED_STRING_TYPE_ARB)
+         *params = node->Type;
+   }
+
+   mtx_unlock(&include_mutex);
 }
 
 
@@ -1563,7 +1879,18 @@ _mesa_GetHandleARB(GLenum pname)
 GLboolean GLAPIENTRY
 _mesa_IsNamedStringARB(int namelen, const char *name)
 {
-   return GL_FALSE;
+   struct gl_include_node *node;
+   GLboolean result = GL_FALSE;
+
+   if (include_node_validate_name(namelen, name)) {
+      mtx_lock(&include_mutex);
+      node = include_node_create_tree(namelen, name);
+      if (node && node->IncludeString)
+         result = GL_TRUE;
+      include_node_remove_tree(namelen, name);
+      mtx_unlock(&include_mutex);
+   }
+   return result;
 }
 
 
@@ -1598,6 +1925,47 @@ void GLAPIENTRY
 _mesa_NamedStringARB(GLenum type, GLint namelen, const GLchar *name,
                      GLint stringlen, const GLchar *string)
 {
+   GLchar *copy;
+   GLsizei len;
+   struct gl_include_node *node;
+   GET_CURRENT_CONTEXT(ctx);
+   if (type != GL_SHADER_INCLUDE_ARB) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glNamedStringARB(invalid type %s)", _mesa_enum_to_string(type));
+      return;
+   }
+   if (!string) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glNamedStringARB(string is NULL)");
+      return;
+   }
+   if (!include_node_validate_name(namelen, name)) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glNamedStringARB(invalid name)");
+      return;
+   }
+
+   mtx_lock(&include_mutex);
+
+   node = include_node_create_tree(namelen, name);
+   if (!node) {
+      mtx_unlock(&include_mutex);
+      return;
+   }
+
+   len = 1 + (stringlen < 0 ? strlen(string) : stringlen);
+   copy = malloc(len);
+   if (!copy) {
+      include_node_remove_tree(namelen, name);
+      mtx_unlock(&include_mutex);
+      return;
+   }
+   _mesa_copy_string(copy, len, NULL, string);
+
+   node->Type = type;
+   if (node->IncludeString)
+      free(node->IncludeString);
+   node->IncludeString = copy;
+   node->StringLen = len;
+
+   mtx_unlock(&include_mutex);
 }
 
 #if defined(HAVE_SHA1)
