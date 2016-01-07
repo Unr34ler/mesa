@@ -1240,6 +1240,50 @@ validate_program(struct gl_context *ctx, GLuint program)
 }
 
 
+/**< The root node for shader includes */
+static struct gl_include_node *include_root;
+/**< To lock access to the include tree */
+static mtx_t include_mutex;
+
+
+void
+_mesa_include_node_init(void)
+{
+   include_root = CALLOC_STRUCT(gl_include_node);
+   mtx_init(&include_mutex, mtx_plain);
+}
+
+
+static void
+include_node_free_node(struct gl_include_node *node)
+{
+   GLsizei i;
+
+   for (i = 0; i < node->ChildCount; i++) {
+      include_node_free_node(node->Children[i]);
+      free(node->Children[i]);
+   }
+
+   free(node->Name);
+   if (node->Children)
+      free(node->Children);
+   if (node->IncludeString)
+      free(node->IncludeString);
+}
+
+
+void
+_mesa_include_node_free_all(void)
+{
+   mtx_lock(&include_mutex);
+
+   include_node_free_node(include_root);
+   free(include_root);
+
+   mtx_unlock(&include_mutex);
+}
+
+
 
 void GLAPIENTRY
 _mesa_AttachObjectARB(GLhandleARB program, GLhandleARB shader)

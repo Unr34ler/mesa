@@ -118,6 +118,7 @@
 #include "remap.h"
 #include "scissor.h"
 #include "shared.h"
+#include "shaderapi.h"
 #include "shaderobj.h"
 #include "shaderimage.h"
 #include "util/simple_list.h"
@@ -356,6 +357,7 @@ one_time_fini(void)
 {
    _mesa_destroy_shader_compiler();
    _mesa_locale_fini();
+   _mesa_include_node_free_all();
 }
 
 /**
@@ -394,6 +396,8 @@ one_time_init( struct gl_context *ctx )
       for (i = 0; i < 256; i++) {
          _mesa_ubyte_to_float_color_tab[i] = (float) i / 255.0F;
       }
+
+      _mesa_include_node_init();
 
       atexit(one_time_fini);
 
