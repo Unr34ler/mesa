@@ -260,6 +260,7 @@ struct pipe_screen {
                                       unsigned index,
                                       struct pipe_driver_query_group_info *info);
 
+   int (*get_fd)(struct pipe_screen *screen);
 };
 
 
