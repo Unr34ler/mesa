@@ -2959,7 +2959,7 @@ NV50PostRaConstantFolding::visit(BasicBlock *bb)
             def = def->getSrc(0)->getInsn();
          if (def && def->op == OP_MOV && def->src(0).getFile() == FILE_IMMEDIATE) {
             vtmp = i->getSrc(1);
-            if (isFloatType(i->sType)) {
+            if (typeSizeof(i->sType) >= 2) {
                i->setSrc(1, def->getSrc(0));
             } else {
                ImmediateValue val;
@@ -3409,7 +3409,7 @@ bool
 Program::optimizePostRA(int level)
 {
    RUN_PASS(2, FlatteningPass, run);
-   if (getTarget()->getChipset() < 0xc0)
+   if (getTarget()->getChipset() < NVISA_GK20A_CHIPSET)
       RUN_PASS(2, NV50PostRaConstantFolding, run);
 
    return true;
