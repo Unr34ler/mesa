@@ -1,3 +1,476 @@
+BB:0 (96 instructions) - df = { }
+ -> BB:2 (tree)
+  0: linterp pass f32 $r2 a[0x70] (8)
+  1: linterp pass f32 $r0 a[0x74] (8)
+  2: ld u32 $r1 c0[0x34] (8)
+  3: mad ftz f32 $r3 $r0 c0[0x30] $r1 (8)
+  4: ld u64 $r0d c0[0x0] (8)
+  5: rcp f32 $r0 $r0 (8)
+  6: rcp f32 $r1 $r1 (8)
+  7: mul ftz f32 $r2 $r2 $r0 (8)
+  8: mul ftz f32 $r4 $r3 $r1 (8)
+  9: mov u32 $r0 0x40000000 (8)
+ 10: mov u32 $r3 0xbf800000 (8)
+ 11: mad ftz f32 $r5 $r2 2.000000 $r3 (8)
+ 12: mad ftz f32 $r6 $r4 2.000000 $r3 (8)
+ 13: mul ftz f32 $r1 $r1 c0[0x0] (8)
+ 14: mul ftz f32 $r1 $r5 $r1 (8)
+ 15: mul ftz f32 $r3 $r1 $r1 (8)
+ 16: mul ftz f32 $r3 $r3 0.320000 (8)
+ 17: mad ftz f32 $r7 $r6 $r6 $r3 (8)
+ 18: mul ftz f32 $r3 $r7 11.500000 (8)
+ 19: add ftz f32 $r5 neg $r3 37.500000 (8)
+ 20: rsq f32 $r3 abs $r5 (8)
+ 21: mul ftz f32 $r8 $r3 $r5 (8)
+ 22: mov u32 $r3 0x00000000 (8)
+ 23: slct ftz f32 $r5 lt $r8 $r63 neg $r5 (8)
+ 24: add ftz f32 $r5 neg $r5 7.000000 (8)
+ 25: mov u32 $r8 0x3f000000 (8)
+ 26: mul ftz f32 $r9 $r5 0.500000 (8)
+ 27: mov u32 $r5 0x3f800000 (8)
+ 28: add ftz f32 $r7 $r7 1.000000 (8)
+ 29: rcp f32 $r7 $r7 (8)
+ 30: mad ftz f32 $r7 $r9 $r7 $r8 (8)
+ 31: mul ftz f32 $r9 $r1 $r7 (8)
+ 32: mul ftz f32 $r6 $r6 $r7 (8)
+ 33: mov u32 $r1 0xc0466666 (8)
+ 34: mad ftz f32 $r1 $r8 c0[0x10] $r1 (8)
+ 35: presin f32 $r1 $r1 (8)
+ 36: sin f32 $r1 $r1 (8)
+ 37: mad ftz f32 $r1 $r1 0.500000 $r8 (8)
+ 38: mad ftz f32 $r0 $r1 1.500000 $r0 (8)
+ 39: presin f32 $r0 $r0 (8)
+ 40: sin f32 $r1 $r0 (8)
+ 41: cos f32 $r7 $r0 (8)
+ 42: mul ftz f32 $r0 $r1 $r1 (8)
+ 43: add ftz f32 $r0 $r0 0.062500 (8)
+ 44: mad ftz f32 $r0 $r7 $r7 $r0 (8)
+ 45: rsq f32 $r8 abs $r0 (8)
+ 46: mul x2^3 ftz f32 $r0 $r1 $r8 (8)
+ 47: add ftz f32 $r1 $r8 $r8 (8)
+ 48: mul x2^3 ftz f32 $r15 $r7 $r8 (8)
+ 49: add ftz f32 $r7 neg $r0 -1.000000 (8)
+ 50: add ftz f32 $r8 neg $r1 -1.700000 (8)
+ 51: add ftz f32 $r10 neg $r15 3.000000 (8)
+ 52: mul ftz f32 $r11 $r7 $r7 (8)
+ 53: mad ftz f32 $r11 $r8 $r8 $r11 (8)
+ 54: mad ftz f32 $r11 $r10 $r10 $r11 (8)
+ 55: rsq f32 $r11 abs $r11 (8)
+ 56: mul ftz f32 $r7 $r7 $r11 (8)
+ 57: mul ftz f32 $r8 $r8 $r11 (8)
+ 58: mul ftz f32 $r10 $r10 $r11 (8)
+ 59: neg ftz f32 $r11 $r10 (8)
+ 60: mul ftz f32 $r12 $r11 $r11 (8)
+ 61: mad ftz f32 $r12 $r7 $r7 $r12 (8)
+ 62: rsq f32 $r12 abs $r12 (8)
+ 63: mul ftz f32 $r11 $r11 $r12 (8)
+ 64: mul ftz f32 $r12 $r7 $r12 (8)
+ 65: mul ftz f32 $r13 $r12 $r8 (8)
+ 66: mul ftz f32 $r14 $r11 $r10 (8)
+ 67: neg ftz f32 $r13 $r13 (8)
+ 68: mad ftz f32 $r14 $r12 $r7 neg $r14 (8)
+ 69: mul ftz f32 $r16 $r11 $r8 (8)
+ 70: mul ftz f32 $r17 $r13 $r13 (8)
+ 71: mad ftz f32 $r17 $r14 $r14 $r17 (8)
+ 72: mad ftz f32 $r17 $r16 $r16 $r17 (8)
+ 73: rsq f32 $r17 abs $r17 (8)
+ 74: mul ftz f32 $r13 $r13 $r17 (8)
+ 75: mul ftz f32 $r14 $r14 $r17 (8)
+ 76: mul ftz f32 $r16 $r16 $r17 (8)
+ 77: mul ftz f32 $r11 $r9 $r11 (8)
+ 78: mul ftz f32 $r9 $r9 $r12 (8)
+ 79: mad ftz f32 $r11 $r6 $r13 $r11 (8)
+ 80: mul ftz f32 $r12 $r6 $r14 (8)
+ 81: mad ftz f32 $r6 $r6 $r16 $r9 (8)
+ 82: mad ftz f32 $r7 $r7 2.000000 $r11 (8)
+ 83: mad ftz f32 $r8 $r8 2.000000 $r12 (8)
+ 84: mad ftz f32 $r9 $r10 2.000000 $r6 (8)
+ 85: mul ftz f32 $r6 $r7 $r7 (8)
+ 86: mad ftz f32 $r6 $r8 $r8 $r6 (8)
+ 87: mad ftz f32 $r6 $r9 $r9 $r6 (8)
+ 88: rsq f32 $r10 abs $r6 (8)
+ 89: mul ftz f32 $r6 $r7 $r10 (8)
+ 90: mul ftz f32 $r7 $r8 $r10 (8)
+ 91: mul ftz f32 $r8 $r9 $r10 (8)
+ 92: prebreak BB:3 (8)
+ 93: mov u32 $r9 $r3 (8)
+ 94: mov u32 $r10 $r3 (8)
+ 95: mov u32 $r11 $r3 (8)
+BB:2 (1 instructions) - idom = BB:0, df = { BB:2 }
+ -> BB:5 (forward)
+ -> BB:4 (tree)
+ 96: set u8 $p0 ge s32 $r11 2 (8)
+BB:4 (1 instructions) - idom = BB:2, df = { }
+ -> BB:3 (cross)
+ 97: $p0 break BB:3 (8)
+BB:5 (5 instructions) - idom = BB:2, df = { BB:2 }
+ -> BB:6 (tree)
+ 98: mov u32 $r14 0x3b03126f (8)
+ 99: mov u32 $r13 0x00000000 (8)
+100: mov u32 $r12 0xbf800000 (8)
+101: prebreak BB:7 (8)
+102: mov u32 $r16 $r13 (8)
+BB:6 (1 instructions) - idom = BB:5, df = { BB:2 BB:6 }
+ -> BB:9 (forward)
+ -> BB:8 (tree)
+103: set u8 $p0 ge s32 $r13 48 (8)
+BB:8 (1 instructions) - idom = BB:6, df = { BB:7 }
+ -> BB:7 (cross)
+104: $p0 break BB:7 (8)
+BB:9 (3 instructions) - idom = BB:6, df = { BB:7 BB:6 }
+ -> BB:11 (forward)
+ -> BB:10 (tree)
+105: mov u32 $r17 0x3a83126f (8)
+106: set ftz u8 $p0 lt f32 abs $r14 $r17 (8)
+107: set or ftz u8 $p0 gt f32 $r16 25.000000 $p0 (8)
+BB:10 (1 instructions) - idom = BB:9, df = { BB:7 }
+ -> BB:7 (cross)
+108: $p0 break BB:7 (8)
+BB:11 (44 instructions) - idom = BB:9, df = { BB:6 }
+ -> BB:13 (tree)
+ -> BB:12 (tree)
+109: add ftz f32 $r16 $r16 $r14 (8)
+110: mad ftz f32 $r12 $r6 $r16 $r0 (8)
+111: mad ftz f32 $r14 $r7 $r16 $r1 (8)
+112: mad ftz f32 $r17 $r8 $r16 $r15 (8)
+113: mul ftz f32 $r18 $r12 5.000000 (8)
+114: floor ftz f32 $r18 $r18 (8)
+115: mul ftz f32 $r18 $r18 0.200000 (8)
+116: add ftz f32 $r18 $r12 neg $r18 (8)
+117: add ftz f32 $r18 $r18 -0.100000 (8)
+118: add ftz f32 $r19 $r14 -0.100000 (8)
+119: add ftz f32 $r20 $r17 -0.100000 (8)
+120: add ftz f32 $r18 abs $r18 -0.086000 (8)
+121: add ftz f32 $r19 abs $r19 -0.070000 (8)
+122: add ftz f32 $r20 abs $r20 -0.595000 (8)
+123: mov u32 $r21 0x00000000 (8)
+124: max ftz f32 $r18 $r18 $r63 (8)
+125: max ftz f32 $r19 $r19 $r63 (8)
+126: max ftz f32 $r20 $r20 $r63 (8)
+127: mul ftz f32 $r18 $r18 $r18 (8)
+128: mad ftz f32 $r18 $r19 $r19 $r18 (8)
+129: mad ftz f32 $r18 $r20 $r20 $r18 (8)
+130: rsq f32 $r19 abs $r18 (8)
+131: mul ftz f32 $r19 $r19 $r18 (8)
+132: slct ftz f32 $r18 lt $r19 $r63 neg $r18 (8)
+133: add ftz f32 $r19 $r18 -0.010000 (8)
+134: add ftz f32 $r18 $r12 0.100000 (8)
+135: mul ftz f32 $r20 $r18 5.000000 (8)
+136: floor ftz f32 $r20 $r20 (8)
+137: mul ftz f32 $r22 $r20 0.200000 (8)
+138: add ftz f32 $r18 $r18 neg $r22 (8)
+139: add ftz f32 $r22 $r14 -0.085000 (8)
+140: add ftz f32 $r23 $r17 -0.200000 (8)
+141: add ftz f32 $r18 $r18 -0.100000 (8)
+142: add ftz f32 $r22 $r22 -0.100000 (8)
+143: add ftz f32 $r23 $r23 -0.100000 (8)
+144: mul ftz f32 $r24 $r20 0.142857 (8)
+145: floor ftz f32 $r24 $r24 (8)
+146: mul ftz f32 $r24 $r24 7.000000 (8)
+147: add ftz f32 $r24 $r20 neg $r24 (8)
+148: set ftz u8 $p0 lt f32 $r20 -21.000000 (8)
+149: set or ftz u8 $p0 eq f32 $r24 2.000000 $p0 (8)
+150: joinat BB:14 (8)
+151: set or ftz u8 $p0 eq f32 $r24 6.000000 $p0 (8)
+152: not $p0 bra BB:13 (8)
+BB:12 (1 instructions) - idom = BB:11, df = { BB:14 }
+ -> BB:14 (forward)
+153: join mov u32 $r20 0x41200000 (8)
+BB:13 (13 instructions) - idom = BB:11, df = { BB:14 }
+ -> BB:14 (forward)
+154: add ftz f32 $r18 abs $r18 -0.050000 (8)
+155: add ftz f32 $r20 abs $r22 -0.065000 (8)
+156: add ftz f32 $r22 abs $r23 -0.390000 (8)
+157: max ftz f32 $r18 $r18 $r63 (8)
+158: max ftz f32 $r20 $r20 $r63 (8)
+159: max ftz f32 $r22 $r22 $r63 (8)
+160: mul ftz f32 $r18 $r18 $r18 (8)
+161: mad ftz f32 $r18 $r20 $r20 $r18 (8)
+162: mad ftz f32 $r18 $r22 $r22 $r18 (8)
+163: rsq f32 $r20 abs $r18 (8)
+164: mul ftz f32 $r20 $r20 $r18 (8)
+165: slct ftz f32 $r18 lt $r20 $r63 neg $r18 (8)
+166: join add ftz f32 $r20 $r18 -0.010000 (8)
+BB:14 (3 instructions) - idom = BB:11, df = { BB:6 }
+ -> BB:223 (tree)
+ -> BB:15 (tree)
+167: mov u32 $r18 0x3f800000 (8)
+168: mov f32 $r22 $r20 (8)
+169: set ftz u8 $p0 lt f32 $r20 $r19 (8)
+BB:15 (0 instructions) - idom = BB:14, df = { BB:16 }
+ -> BB:16 (forward)
+BB:223 (2 instructions) - df = { }
+ -> BB:16 (forward)
+170: not $p0 mov u32 $r22 $r19 (8)
+171: not $p0 mov u32 $r18 $r21 (8)
+BB:16 (100 instructions) - idom = BB:14, df = { BB:6 }
+ -> BB:224 (tree)
+ -> BB:17 (tree)
+172: add ftz f32 $r19 abs $r12 -4.600000 (8)
+173: add ftz f32 $r20 abs $r14 -1.000000 (8)
+174: add ftz f32 $r21 abs $r17 -4.000000 (8)
+175: max ftz f32 $r23 $r19 $r63 (8)
+176: max ftz f32 $r24 $r20 $r63 (8)
+177: max ftz f32 $r25 $r21 $r63 (8)
+178: max ftz f32 $r20 $r20 $r21 (8)
+179: max ftz f32 $r19 $r19 $r20 (8)
+180: min ftz f32 $r19 $r19 $r63 (8)
+181: mul ftz f32 $r20 $r23 $r23 (8)
+182: mad ftz f32 $r20 $r24 $r24 $r20 (8)
+183: mad ftz f32 $r20 $r25 $r25 $r20 (8)
+184: rsq f32 $r21 abs $r20 (8)
+185: mul ftz f32 $r21 $r21 $r20 (8)
+186: slct ftz f32 $r20 lt $r21 $r63 neg $r20 (8)
+187: add ftz f32 $r19 $r19 $r20 (8)
+188: max ftz f32 $r19 $r22 $r19 (8)
+189: add ftz f32 $r20 $r17 -1.700000 (8)
+190: add ftz f32 $r21 abs $r12 -5.400000 (8)
+191: add ftz f32 $r22 abs $r14 -0.600000 (8)
+192: add ftz f32 $r20 abs $r20 -1.000000 (8)
+193: max ftz f32 $r27 $r21 $r63 (8)
+194: max ftz f32 $r28 $r22 $r63 (8)
+195: max ftz f32 $r29 $r20 $r63 (8)
+196: add ftz f32 $r20 $r14 0.300000 (8)
+197: add ftz f32 $r21 $r17 -0.100000 (8)
+198: add ftz f32 $r20 abs $r20 -0.300000 (8)
+199: add ftz f32 $r21 abs $r21 -0.600000 (8)
+200: max ftz f32 $r30 $r20 $r63 (8)
+201: max ftz f32 $r31 $r21 $r63 (8)
+202: add ftz f32 $r20 $r14 1.000000 (8)
+203: add ftz f32 $r21 $r17 -2.500000 (8)
+204: add ftz f32 $r20 abs $r20 -3.000000 (8)
+205: add ftz f32 $r21 abs $r21 -1.000000 (8)
+206: max ftz f32 $r32 $r20 $r63 (8)
+207: max ftz f32 $r33 $r21 $r63 (8)
+208: add ftz f32 $r20 abs $r12 -5.250000 (8)
+209: add ftz f32 $r21 $r14 2.200000 (8)
+210: add ftz f32 $r22 $r17 0.350000 (8)
+211: mul ftz f32 $r23 $r14 18.000000 (8)
+212: presin f32 $r23 $r23 (8)
+213: sin f32 $r23 $r23 (8)
+214: add ftz f32 $r23 $r23 0.700000 (8)
+215: sat mul ftz f32 $r23 $r23 0.714286 (8)
+216: add ftz f32 $r24 abs $r12 -5.050000 (8)
+217: add ftz f32 $r25 $r17 -0.300000 (8)
+218: add ftz f32 $r24 abs $r24 -0.350000 (8)
+219: add ftz f32 $r26 abs $r14 -0.200000 (8)
+220: add ftz f32 $r34 abs $r25 -0.800000 (8)
+221: max ftz f32 $r24 $r24 $r63 (8)
+222: max ftz f32 $r25 $r26 $r63 (8)
+223: max ftz f32 $r26 $r34 $r63 (8)
+224: mul ftz f32 $r27 $r27 $r27 (8)
+225: mad ftz f32 $r28 $r28 $r28 $r27 (8)
+226: mad ftz f32 $r28 $r29 $r29 $r28 (8)
+227: rsq f32 $r29 abs $r28 (8)
+228: mul ftz f32 $r29 $r29 $r28 (8)
+229: slct ftz f32 $r28 lt $r29 $r63 neg $r28 (8)
+230: add ftz f32 $r28 $r28 -0.050000 (8)
+231: mad ftz f32 $r29 $r30 $r30 $r27 (8)
+232: mad ftz f32 $r29 $r31 $r31 $r29 (8)
+233: rsq f32 $r30 abs $r29 (8)
+234: mul ftz f32 $r30 $r30 $r29 (8)
+235: slct ftz f32 $r29 lt $r30 $r63 neg $r29 (8)
+236: add ftz f32 $r29 $r29 -0.050000 (8)
+237: min ftz f32 $r28 $r28 $r29 (8)
+238: mad ftz f32 $r27 $r32 $r32 $r27 (8)
+239: mad ftz f32 $r27 $r33 $r33 $r27 (8)
+240: rsq f32 $r29 abs $r27 (8)
+241: mul ftz f32 $r29 $r29 $r27 (8)
+242: slct ftz f32 $r27 lt $r29 $r63 neg $r27 (8)
+243: add ftz f32 $r27 $r27 -0.050000 (8)
+244: min ftz f32 $r27 $r28 $r27 (8)
+245: mul ftz f32 $r20 $r20 $r20 (8)
+246: mad ftz f32 $r20 $r22 $r22 $r20 (8)
+247: rsq f32 $r22 abs $r20 (8)
+248: mul ftz f32 $r22 $r22 $r20 (8)
+249: slct ftz f32 $r20 lt $r22 $r63 neg $r20 (8)
+250: add ftz f32 $r20 $r20 -0.100000 (8)
+251: add ftz f32 $r21 abs $r21 -2.000000 (8)
+252: max ftz f32 $r20 $r20 $r21 (8)
+253: mov u32 $r28 0x40000000 (8)
+254: add ftz f32 $r21 $r23 $r23 (8)
+255: add ftz f32 $r21 neg $r21 3.000000 (8)
+256: mul ftz f32 $r21 $r23 $r21 (8)
+257: mul ftz f32 $r21 $r23 $r21 (8)
+258: mul ftz f32 $r21 $r21 0.030000 (8)
+259: mad ftz f32 $r21 $r14 0.017000 $r21 (8)
+260: add ftz f32 $r21 $r21 0.025000 (8)
+261: add ftz f32 $r20 $r20 neg $r21 (8)
+262: min ftz f32 $r20 $r27 $r20 (8)
+263: mul ftz f32 $r21 $r24 $r24 (8)
+264: mad ftz f32 $r21 $r25 $r25 $r21 (8)
+265: mad ftz f32 $r21 $r26 $r26 $r21 (8)
+266: rsq f32 $r22 abs $r21 (8)
+267: mul ftz f32 $r22 $r22 $r21 (8)
+268: slct ftz f32 $r21 lt $r22 $r63 neg $r21 (8)
+269: add ftz f32 $r21 $r21 -0.050000 (8)
+270: min ftz f32 $r20 $r20 $r21 (8)
+271: set ftz u8 $p0 lt f32 $r20 $r19 (8)
+BB:17 (0 instructions) - idom = BB:16, df = { BB:18 }
+ -> BB:18 (forward)
+BB:224 (2 instructions) - df = { }
+ -> BB:18 (forward)
+272: not $p0 mov u32 $r20 $r19 (8)
+273: not $p0 mov u32 $r28 $r18 (8)
+BB:18 (3 instructions) - idom = BB:16, df = { BB:6 }
+ -> BB:225 (tree)
+ -> BB:19 (tree)
+274: add ftz f32 $r18 $r14 3.750000 (8)
+275: mov u32 $r19 0x40400000 (8)
+276: set ftz u8 $p0 lt f32 $r18 $r20 (8)
+BB:19 (0 instructions) - idom = BB:18, df = { BB:20 }
+ -> BB:20 (forward)
+BB:225 (2 instructions) - df = { }
+ -> BB:20 (forward)
+277: not $p0 mov u32 $r18 $r20 (8)
+278: not $p0 mov u32 $r19 $r28 (8)
+BB:20 (5 instructions) - idom = BB:18, df = { BB:6 }
+ -> BB:226 (tree)
+ -> BB:21 (tree)
+279: add ftz f32 $r20 neg $r17 3.500000 (8)
+280: add ftz f32 $r21 $r12 6.500000 (8)
+281: min ftz f32 $r20 $r20 $r21 (8)
+282: mov u32 $r21 0x40800000 (8)
+283: set ftz u8 $p0 lt f32 $r20 $r18 (8)
+BB:21 (0 instructions) - idom = BB:20, df = { BB:22 }
+ -> BB:22 (forward)
+BB:226 (2 instructions) - df = { }
+ -> BB:22 (forward)
+284: not $p0 mov u32 $r20 $r18 (8)
+285: not $p0 mov u32 $r21 $r19 (8)
+BB:22 (26 instructions) - idom = BB:20, df = { BB:6 }
+ -> BB:227 (tree)
+ -> BB:23 (tree)
+286: add ftz f32 $r18 $r14 -1.300000 (8)
+287: add ftz f32 $r19 $r17 -1.100000 (8)
+288: abs ftz f32 $r22 $r12 (8)
+289: mul ftz f32 $r22 $r22 0.600000 (8)
+290: add ftz f32 $r23 neg abs $r12 1.000000 (8)
+291: mad ftz f32 $r19 $r22 $r23 $r19 (8)
+292: mul ftz f32 $r23 $r18 0.900000 (8)
+293: mul ftz f32 $r18 $r18 -0.430000 (8)
+294: mad ftz f32 $r23 $r19 0.430000 $r23 (8)
+295: mad ftz f32 $r18 $r19 0.900000 $r18 (8)
+296: abs ftz f32 $r18 $r18 (8)
+297: add ftz f32 $r19 abs $r12 -1.000000 (8)
+298: add ftz f32 $r22 abs $r23 -0.700000 (8)
+299: max ftz f32 $r19 $r19 $r63 (8)
+300: max ftz f32 $r22 $r22 $r63 (8)
+301: max ftz f32 $r18 $r18 $r63 (8)
+302: mul ftz f32 $r19 $r19 $r19 (8)
+303: mad ftz f32 $r19 $r22 $r22 $r19 (8)
+304: mad ftz f32 $r18 $r18 $r18 $r19 (8)
+305: rsq f32 $r19 abs $r18 (8)
+306: mul ftz f32 $r19 $r19 $r18 (8)
+307: slct ftz f32 $r18 lt $r19 $r63 neg $r18 (8)
+308: add ftz f32 $r18 $r18 -0.010000 (8)
+309: mul ftz f32 $r22 $r18 0.500000 (8)
+310: mov u32 $r23 0x40a00000 (8)
+311: set ftz u8 $p0 lt f32 $r22 $r20 (8)
+BB:23 (0 instructions) - idom = BB:22, df = { BB:24 }
+ -> BB:24 (forward)
+BB:227 (2 instructions) - df = { }
+ -> BB:24 (forward)
+312: not $p0 mov u32 $r22 $r20 (8)
+313: not $p0 mov u32 $r23 $r21 (8)
+BB:24 (42 instructions) - idom = BB:22, df = { BB:6 }
+ -> BB:228 (tree)
+ -> BB:25 (tree)
+314: add ftz f32 $r18 $r12 -1.000000 (8)
+315: add ftz f32 $r19 $r14 3.600000 (8)
+316: add ftz f32 $r20 $r17 -1.200000 (8)
+317: add ftz f32 $r21 $r18 -0.250000 (8)
+318: add ftz f32 $r24 $r21 $r21 (8)
+319: floor ftz f32 $r24 $r24 (8)
+320: mul ftz f32 $r24 $r24 0.500000 (8)
+321: add ftz f32 $r21 $r21 neg $r24 (8)
+322: add ftz f32 $r21 $r21 -0.250000 (8)
+323: abs ftz f32 $r24 $r19 (8)
+324: add ftz f32 $r21 abs $r21 -0.050000 (8)
+325: add ftz f32 $r25 abs $r20 -0.380000 (8)
+326: max ftz f32 $r21 $r21 $r63 (8)
+327: max ftz f32 $r24 $r24 $r63 (8)
+328: max ftz f32 $r25 $r25 $r63 (8)
+329: add ftz f32 $r18 abs $r18 -0.750000 (8)
+330: add ftz f32 $r19 abs $r19 -1.000000 (8)
+331: add ftz f32 $r20 abs $r20 -1.000000 (8)
+332: max ftz f32 $r26 $r18 $r63 (8)
+333: max ftz f32 $r27 $r19 $r63 (8)
+334: max ftz f32 $r28 $r20 $r63 (8)
+335: mul ftz f32 $r21 $r21 $r21 (8)
+336: mad ftz f32 $r21 $r24 $r24 $r21 (8)
+337: mad ftz f32 $r21 $r25 $r25 $r21 (8)
+338: rsq f32 $r24 abs $r21 (8)
+339: mul ftz f32 $r24 $r24 $r21 (8)
+340: slct ftz f32 $r21 lt $r24 $r63 neg $r21 (8)
+341: add ftz f32 $r21 $r21 -0.080000 (8)
+342: mul ftz f32 $r21 $r21 0.500000 (8)
+343: max ftz f32 $r19 $r19 $r20 (8)
+344: max ftz f32 $r18 $r18 $r19 (8)
+345: min ftz f32 $r18 $r18 $r63 (8)
+346: mul ftz f32 $r19 $r26 $r26 (8)
+347: mad ftz f32 $r19 $r27 $r27 $r19 (8)
+348: mad ftz f32 $r19 $r28 $r28 $r19 (8)
+349: rsq f32 $r20 abs $r19 (8)
+350: mul ftz f32 $r20 $r20 $r19 (8)
+351: slct ftz f32 $r19 lt $r20 $r63 neg $r19 (8)
+352: add ftz f32 $r18 $r18 $r19 (8)
+353: max ftz f32 $r18 $r21 $r18 (8)
+354: mov u32 $r19 0x40c00000 (8)
+355: set ftz u8 $p0 lt f32 $r18 $r22 (8)
+BB:25 (0 instructions) - idom = BB:24, df = { BB:26 }
+ -> BB:26 (forward)
+BB:228 (2 instructions) - df = { }
+ -> BB:26 (forward)
+356: not $p0 mov u32 $r18 $r22 (8)
+357: not $p0 mov u32 $r19 $r23 (8)
+BB:26 (53 instructions) - idom = BB:24, df = { BB:6 }
+ -> BB:229 (tree)
+ -> BB:27 (tree)
+358: add ftz f32 $r14 $r14 1.800000 (8)
+359: add ftz f32 $r17 $r17 3.000000 (8)
+360: mul ftz f32 $r21 $r12 0.900000 (8)
+361: mul ftz f32 $r12 $r12 0.440000 (8)
+362: mad ftz f32 $r21 $r17 -0.440000 $r21 (8)
+363: mad ftz f32 $r12 $r17 0.900000 $r12 (8)
+364: add ftz f32 $r17 $r14 -0.100000 (8)
+365: sat mul ftz f32 $r17 $r17 3.333333 (8)
+366: add ftz f32 $r20 abs $r21 -1.500000 (8)
+367: add ftz f32 $r22 abs $r14 -0.250000 (8)
+368: add ftz f32 $r23 abs $r12 -0.600000 (8)
+369: max ftz f32 $r20 $r20 $r63 (8)
+370: max ftz f32 $r22 $r22 $r63 (8)
+371: max ftz f32 $r24 $r23 $r63 (8)
+372: add ftz f32 $r25 abs $r21 -1.400000 (8)
+373: add ftz f32 $r14 $r14 1.500000 (8)
+374: mul ftz f32 $r21 $r21 8.000000 (8)
+375: presin f32 $r21 $r21 (8)
+376: sin f32 $r21 $r21 (8)
+377: mov u32 $r26 0x3f000000 (8)
+378: mul ftz f32 $r21 $r21 0.500000 (8)
+379: mul ftz f32 $r12 $r12 8.000000 (8)
+380: presin f32 $r12 $r12 (8)
+381: sin f32 $r12 $r12 (8)
+382: mad ftz f32 $r12 $r21 $r12 $r26 (8)
+383: lg2 f32 $r12 $r12 (8)
+384: mul dnz f32 $r12 $r12 3.000000 (8)
+385: preex2 f32 $r12 $r12 (8)
+386: ex2 f32 $r12 $r12 (8)
+387: mul ftz f32 $r12 $r12 0.100000 (8)
+388: add ftz f32 $r21 $r17 $r17 (8)
+389: add ftz f32 $r21 neg $r21 3.000000 (8)
+390: mul ftz f32 $r21 $r17 $r21 (8)
+391: mul ftz f32 $r17 $r17 $r21 (8)
+392: mul ftz f32 $r20 $r20 $r20 (8)
+393: mad ftz f32 $r20 $r22 $r22 $r20 (8)
+394: mad ftz f32 $r20 $r24 $r24 $r20 (8)
+395: rsq f32 $r21 abs $r20 (8)
+396: mul ftz f32 $r21 $r21 $r20 (8)
+397: slct ftz f32 $r20 lt $r21 $r63 neg $r20 (8)
+398: add ftz f32 $r20 $r20 -0.300000 (8)
+399: mad ftz f32 $r12 $r12 $r17 $r20 (8)
+400: mul ftz f32 $r17 $r25 $r25 (8)
+401: mad ftz f32 $r17 $r23 $r23 $r17 (8)
 /*
  * Copyright 2011 Christoph Bumiller
  *
@@ -70,7 +543,7 @@ bool Instruction::isDead(bool postRa) const
        op == OP_WRSV)
       return false;
 
-   if (postRa && op == OP_MOV && subOp == NV50_IR_SUBOP_MOV_FINAL)
+   if (postRa && op == OP_MOV && subOp == 1)
       return false;
 
    for (int d = 0; defExists(d); ++d)
@@ -887,10 +1360,8 @@ ConstantFolding::opnd3(Instruction *i, ImmediateValue &imm2)
       if (imm2.isInteger(0)) {
          i->op = OP_MUL;
          i->setSrc(2, NULL);
-         foldCount++;
          return;
       }
-      break;
    default:
       return;
    }
@@ -1543,6 +2014,7 @@ private:
    void handleCVT_EXTBF(Instruction *);
    void handleSUCLAMP(Instruction *);
    void handleNEG(Instruction *);
+   void handleMAD(Instruction *);
 
    BuildUtil bld;
 };
@@ -1638,10 +2110,8 @@ AlgebraicOpt::tryADDToMADOrSAD(Instruction *add, operation toOp)
    if (src->getUniqueInsn() && src->getUniqueInsn()->bb != add->bb)
       return false;
 
-   if (src->getInsn()->saturate || src->getInsn()->postFactor ||
-       src->getInsn()->dnz)
+   if (src->getInsn()->postFactor)
       return false;
-
    if (toOp == OP_SAD) {
       ImmediateValue imm;
       if (!src->getInsn()->src(2).getImmediate(imm))
@@ -2017,31 +2487,54 @@ AlgebraicOpt::handleSUCLAMP(Instruction *insn)
    insn->setSrc(0, add->getSrc(s));
 }
 
-// NEG(AND(SET, 1)) -> SET
 void
 AlgebraicOpt::handleNEG(Instruction *i) {
-   Instruction *src = i->getSrc(0)->getInsn();
+   Value *src = i->getSrc(0);
+   if (src->getInsn()->op == OP_AND) {
+      ImmediateValue immd;
+      int b = 1;
+      if (!src->getInsn()->src(0).getImmediate(immd)) {
+         if (!src->getInsn()->src(1).getImmediate(immd))
+            return;
+         b = 0;
+      }
+
+      if (immd.isInteger(1)) {
+         Value *srcAnd = src->getInsn()->getSrc(b);
+         operation op = srcAnd->getInsn()->op;
+         if (op == OP_SET || op == OP_SLCT) {
+            i->def(0).replace(srcAnd->getInsn()->getDef(0), false);
+            return;
+         }
+      }
+   }
+}
+
+void
+AlgebraicOpt::handleMAD(Instruction *i)
+{return;
+   int s = -1;
    ImmediateValue imm;
-   int b;
 
-   if (isFloatType(i->sType) || !src || src->op != OP_AND)
-      return;
-
-   if (src->src(0).getImmediate(imm))
-      b = 1;
-   else if (src->src(1).getImmediate(imm))
-      b = 0;
-   else
-      return;
-
-   if (!imm.isInteger(1))
-      return;
-
-   Instruction *set = src->getSrc(b)->getInsn();
-   if ((set->op == OP_SET || set->op == OP_SET_AND ||
-       set->op == OP_SET_OR || set->op == OP_SET_XOR) &&
-       !isFloatType(set->dType)) {
-      i->def(0).replace(set->getDef(0), false);
+   if (i->src(0).getImmediate(imm))
+      s = 0;
+   else if (i->src(1).getImmediate(imm)) {
+      s = 1;
+   }
+   if (s != -1) {
+      float f = imm.reg.data.f32;
+      if (f == 0.125 || f == 0.25 || f == 0.5 || f == 1.0 || f == 2.0 || f == 4.0 || f == 8.0) {
+         Instruction *src = i->getSrc(s ^ 0x1)->getInsn();
+         if (src->op == OP_MUL) {
+            bld.setPosition(i, false);
+            i->op = OP_ADD;
+            i->setSrc(s, i->getSrc(2));
+            i->setSrc(2, NULL);
+            i->setSrc(s^0x1, bld.mkOp2v(OP_MUL, src->dType, bld.getSSA(src->dType), src->getSrc(0), src->getSrc(1)));
+            i->getSrc(s^0x1)->getInsn()->postFactor = log2(imm.reg.data.f32);
+            handleADD(i);
+         }
+      }
    }
 }
 
@@ -2084,6 +2577,9 @@ AlgebraicOpt::visit(BasicBlock *bb)
          break;
       case OP_NEG:
          handleNEG(i);
+         break;
+      case OP_MAD:
+         handleMAD(i);
          break;
       default:
          break;
@@ -2570,12 +3066,6 @@ MemoryOpt::runOpt(BasicBlock *bb)
          }
       } else
       if (ldst->op == OP_STORE || ldst->op == OP_EXPORT) {
-         if (typeSizeof(ldst->dType) == 4 &&
-             ldst->src(1).getFile() == FILE_GPR &&
-             ldst->getSrc(1)->getInsn()->op == OP_NOP) {
-            delete_Instruction(prog, ldst);
-            continue;
-         }
          isLoad = false;
       } else {
          // TODO: maybe have all fixed ops act as barrier ?
@@ -2827,7 +3317,7 @@ FlatteningPass::visit(BasicBlock *bb)
              !isSurfaceOp(insn->op) && // not confirmed
              insn->op != OP_LINTERP && // probably just nve4
              insn->op != OP_PINTERP && // probably just nve4
-             ((insn->op != OP_LOAD && insn->op != OP_STORE && insn->op != OP_ATOM) ||
+             ((insn->op != OP_LOAD && insn->op != OP_STORE) ||
               (typeSizeof(insn->dType) <= 4 && !insn->src(0).isIndirect(0))) &&
              !insn->isNop()) {
             insn->join = 1;
@@ -2943,21 +3433,38 @@ NV50PostRaConstantFolding::visit(BasicBlock *bb)
          def = i->getSrc(1)->getInsn();
          if (def && def->op == OP_SPLIT && typeSizeof(def->sType) == 4)
             def = def->getSrc(0)->getInsn();
-         if (def && def->op == OP_MOV && def->src(0).getFile() == FILE_IMMEDIATE) {
-            if (isFloatType(i->sType)) {
-               i->setSrc(1, def->getSrc(0));
-            } else {
-               ImmediateValue val;
-               bool ret = def->src(0).getImmediate(val);
-               assert(ret);
+         if (!(def && def->op == OP_MOV && def->src(0).getFile() == FILE_IMMEDIATE)) {
+            /* maybe we can swap it */
+            def = i->getSrc(0)->getInsn();
+            if (def && def->op == OP_SPLIT && typeSizeof(def->sType) == 4)
+               def = def->getSrc(0)->getInsn();
+            if (!(def && def->op == OP_MOV && def->src(0).getFile() == FILE_IMMEDIATE))
+               break;
+
+            Value *tmpS = i->getSrc(0);
+            Modifier tmpM = i->src(0).mod;
+
+            i->setSrc(0, i->getSrc(1));
+            i->src(0).mod = i->src(1).mod;
+
+            i->setSrc(1, tmpS);
+            i->src(1).mod = tmpM;
+         }
+
+         if (typeSizeof(i->sType) > 2) {
+            i->setSrc(1, def->getSrc(0));
+         } else {
+            ImmediateValue val;
+            bool ret = def->src(0).getImmediate(val);
+            assert(ret);
+            if (typeSizeof(i->sType) == 2) {
                if (i->getSrc(1)->reg.data.id & 1)
                   val.reg.data.u32 >>= 16;
                val.reg.data.u32 &= 0xffff;
-               i->setSrc(1, new_ImmediateValue(bb->getProgram(), val.reg.data.u32));
             }
-
-            break;
+            i->setSrc(1, new_ImmediateValue(bb->getProgram(), val.reg.data.u32));
          }
+
          break;
       default:
          break;
@@ -3063,7 +3570,7 @@ Instruction::isResultEqual(const Instruction *that) const
    if (that->srcExists(s))
       return false;
 
-   if (op == OP_LOAD || op == OP_VFETCH || op == OP_ATOM) {
+   if (op == OP_LOAD || op == OP_VFETCH) {
       switch (src(0).getFile()) {
       case FILE_MEMORY_CONST:
       case FILE_SHADER_INPUT:
@@ -3094,8 +3601,6 @@ GlobalCSE::visit(BasicBlock *bb)
       ik = phi->getSrc(0)->getInsn();
       if (!ik)
          continue; // probably a function input
-      if (ik->defCount(0xff) > 1)
-         continue; // too painful to check if we can really push this forward
       for (s = 1; phi->srcExists(s); ++s) {
          if (phi->getSrc(s)->refCount() > 1)
             break;
@@ -3417,9 +3922,9 @@ bool
 Program::optimizePostRA(int level)
 {
    RUN_PASS(2, FlatteningPass, run);
-   if (getTarget()->getChipset() < 0xc0)
+   if (getTarget()->getChipset() < 0xf0)
       RUN_PASS(2, NV50PostRaConstantFolding, run);
-   RUN_PASS(1, PostRADeadCodeElim, buryAll);
+   RUN_PASS(0, PostRADeadCodeElim, buryAll);
 
    return true;
 }
