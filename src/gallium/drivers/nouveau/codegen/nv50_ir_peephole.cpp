@@ -61,7 +61,7 @@ Instruction::isNop() const
    return false;
 }
 
-bool Instruction::isDead() const
+bool Instruction::isDead(bool postRa) const
 {
    if (op == OP_STORE ||
        op == OP_EXPORT ||
@@ -70,8 +70,11 @@ bool Instruction::isDead() const
        op == OP_WRSV)
       return false;
 
+   if (postRa && op == OP_MOV && subOp == NV50_IR_SUBOP_MOV_FINAL)
+      return false;
+
    for (int d = 0; defExists(d); ++d)
-      if (getDef(d)->refCount() || getDef(d)->reg.data.id >= 0)
+      if (getDef(d)->refCount() || (!postRa && getDef(d)->reg.data.id >= 0))
          return false;
 
    if (terminator || asFlow())
@@ -2911,19 +2914,9 @@ private:
    virtual bool visit(BasicBlock *);
 };
 
-static bool
-post_ra_dead(Instruction *i)
-{
-   for (int d = 0; i->defExists(d); ++d)
-      if (i->getDef(d)->refCount())
-         return false;
-   return true;
-}
-
 bool
 NV50PostRaConstantFolding::visit(BasicBlock *bb)
 {
-   Value *vtmp;
    Instruction *def;
 
    for (Instruction *i = bb->getFirst(); i; i = i->next) {
@@ -2950,7 +2943,6 @@ NV50PostRaConstantFolding::visit(BasicBlock *bb)
          if (def && def->op == OP_SPLIT && typeSizeof(def->sType) == 4)
             def = def->getSrc(0)->getInsn();
          if (def && def->op == OP_MOV && def->src(0).getFile() == FILE_IMMEDIATE) {
-            vtmp = i->getSrc(1);
             if (isFloatType(i->sType)) {
                i->setSrc(1, def->getSrc(0));
             } else {
@@ -2961,19 +2953,6 @@ NV50PostRaConstantFolding::visit(BasicBlock *bb)
                   val.reg.data.u32 >>= 16;
                val.reg.data.u32 &= 0xffff;
                i->setSrc(1, new_ImmediateValue(bb->getProgram(), val.reg.data.u32));
-            }
-
-            /* There's no post-RA dead code elimination, so do it here
-             * XXX: if we add more code-removing post-RA passes, we might
-             *      want to create a post-RA dead-code elim pass */
-            if (post_ra_dead(vtmp->getInsn())) {
-               Value *src = vtmp->getInsn()->getSrc(0);
-               // Careful -- splits will have already been removed from the
-               // functions. Don't double-delete.
-               if (vtmp->getInsn()->bb)
-                  delete_Instruction(prog, vtmp->getInsn());
-               if (src->getInsn() && post_ra_dead(src->getInsn()))
-                  delete_Instruction(prog, src->getInsn());
             }
 
             break;
@@ -3433,6 +3412,48 @@ BranchElim::getChainedBlock(FlowInstruction *flow, bool strict)
 
 // =============================================================================
 
+// POST-RA Dead-code-elimination
+
+// Remove computations of unused values.
+class PostRADeadCodeElim : public Pass
+{
+public:
+   bool buryAll(Program *);
+
+private:
+   virtual bool visit(BasicBlock *);
+   unsigned int deadCount;
+};
+
+bool
+PostRADeadCodeElim::buryAll(Program *prog)
+{
+   do {
+      deadCount = 0;
+      if (!this->run(prog, false, false))
+         return false;
+   } while (deadCount);
+
+   return true;
+}
+
+bool
+PostRADeadCodeElim::visit(BasicBlock *bb)
+{
+   Instruction *prev;
+
+   for (Instruction *i = bb->getExit(); i; i = prev) {
+      prev = i->prev;
+      if (i->isDead(true)) {
+         ++deadCount;
+         delete_Instruction(prog, i);
+      }
+   }
+   return true;
+}
+
+// =============================================================================
+
 #define RUN_PASS(l, n, f)                       \
    if (level >= (l)) {                          \
       if (dbgFlags & NV50_IR_DEBUG_VERBOSE)     \
@@ -3469,6 +3490,7 @@ Program::optimizePostRA(int level)
    RUN_PASS(2, FlatteningPass, run);
    if (getTarget()->getChipset() < 0xc0)
       RUN_PASS(2, NV50PostRaConstantFolding, run);
+   RUN_PASS(1, PostRADeadCodeElim, buryAll);
 
    return true;
 }
