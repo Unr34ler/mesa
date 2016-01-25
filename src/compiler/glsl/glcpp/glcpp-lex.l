@@ -181,6 +181,8 @@ NEWLINE		(\r\n|\n\r|\r|\n)
 IDENTIFIER	[_a-zA-Z][_a-zA-Z0-9]*
 PP_NUMBER	[.]?[0-9]([._a-zA-Z0-9]|[eEpP][-+])*
 PUNCTUATION	[][(){}.&*~!/%<>^|;,=+-]
+PATH_PART	[ _a-zA-Z0-9()\[\]{}.&*~!%^|;,=+-]+
+PATH		\/?{PATH_PART}(\/{PATH_PART})*
 
 /* The OTHER class is simply a catch-all for things that the CPP
 parser just doesn't care about. Since flex regular expressions that
@@ -306,9 +308,14 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	BEGIN INITIAL;
 }
 
-	/* glcpp doesn't handle #extension, #version, or #pragma directives.
-	 * Simply pass them through to the main compiler's lexer/parser. */
+	/* glcpp doesn't handle #extension, #include, #version, or #pragma directives.
+	 * Simply pass them through to the main compiler's lexer/parser.
+	 * Only includes with valid paths are passed on. */
 <HASH>(extension|pragma)[^\r\n]* {
+	BEGIN INITIAL;
+	RETURN_STRING_TOKEN (PRAGMA);
+}
+<HASH>include{HSPACE}*(\"{PATH}\"|\<{PATH}\>){HSPACE}* {
 	BEGIN INITIAL;
 	RETURN_STRING_TOKEN (PRAGMA);
 }
