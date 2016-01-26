@@ -3409,6 +3409,55 @@ PostRADeadCodeElim::visit(BasicBlock *bb)
 
 // =============================================================================
 
+// Tries to improve dual issueing trivially
+class PostRADualIssue : public Pass
+{
+private:
+   virtual bool visit(BasicBlock *);
+};
+
+static
+bool
+isChainedCommutationLegal(Instruction *a, Instruction *b)
+{
+   Instruction *check = a;
+   do {
+      if (!check->isCommutationLegal(b))
+         return false;
+      check = check->next;
+   } while (check != b);
+   return true;
+}
+
+bool
+PostRADualIssue::visit(BasicBlock *bb)
+{
+   const Target *target = prog->getTarget();
+   Instruction *i, *next, *check;
+
+   for (i = bb->getEntry(); i; i = next) {
+      next = i->next;
+
+      // check next
+      if (!next || next->fixed || next->asFlow() || target->canDualIssue(i, next))
+         continue;
+
+      check = next->next;
+      while (check && !check->fixed && !check->asFlow() && check->prev->bb == check->bb && isChainedCommutationLegal(i, check)) {
+         if (target->canDualIssue(i, check)) {
+            while (check->prev != i)
+               bb->permuteAdjacent(check->prev, check);
+            next = i->next;
+            break;
+         }
+         check = check->next;
+      }
+   }
+   return true;
+}
+
+// =============================================================================
+
 #define RUN_PASS(l, n, f)                       \
    if (level >= (l)) {                          \
       if (dbgFlags & NV50_IR_DEBUG_VERBOSE)     \
@@ -3445,6 +3494,7 @@ Program::optimizePostRA(int level)
    if (getTarget()->getChipset() < NVISA_GK20A_CHIPSET)
       RUN_PASS(2, NV50PostRaConstantFolding, run);
    RUN_PASS(1, PostRADeadCodeElim, buryAll);
+   RUN_PASS(2, PostRADualIssue, run);
 
    return true;
 }
