@@ -2957,6 +2957,17 @@ NV50PostRaConstantFolding::visit(BasicBlock *bb)
          def = i->getSrc(1)->getInsn();
          if (def && def->op == OP_SPLIT && typeSizeof(def->sType) == 4)
             def = def->getSrc(0)->getInsn();
+         if (!def || def->op != OP_MOV || def->src(0).getFile() != FILE_IMMEDIATE) {
+            /* maybe we can swap it */
+            def = i->getSrc(0)->getInsn();
+            if (def && def->op == OP_SPLIT && typeSizeof(def->sType) == 4)
+               def = def->getSrc(0)->getInsn();
+            if (!def || def->op != OP_MOV || def->src(0).getFile() != FILE_IMMEDIATE)
+               break;
+
+            i->swapSources(0, 1);
+         }
+
          if (def && def->op == OP_MOV && def->src(0).getFile() == FILE_IMMEDIATE) {
             if (typeSizeof(i->sType) >= 2) {
                i->setSrc(1, def->getSrc(0));
