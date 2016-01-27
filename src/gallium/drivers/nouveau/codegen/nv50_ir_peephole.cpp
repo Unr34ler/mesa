@@ -3474,10 +3474,13 @@ Program::optimizeSSA(int level)
    RUN_PASS(1, CopyPropagation, run);
    RUN_PASS(1, MergeSplits, run);
    RUN_PASS(2, GlobalCSE, run);
-   RUN_PASS(1, LocalCSE, run);
-   RUN_PASS(2, AlgebraicOpt, run);
-   RUN_PASS(2, ModifierFolding, run); // before load propagation -> less checks
-   RUN_PASS(1, ConstantFolding, foldAll);
+   for (int i = 0; i < 2; ++i) {
+      RUN_PASS(1, LocalCSE, run);
+      RUN_PASS(2, AlgebraicOpt, run);
+      RUN_PASS(2, ModifierFolding, run); // before load propagation -> less checks
+      RUN_PASS(1, ConstantFolding, foldAll);
+      RUN_PASS(1, DeadCodeElim, buryAll);
+   }
    RUN_PASS(1, LoadPropagation, run);
    RUN_PASS(1, IndirectPropagation, run);
    RUN_PASS(2, MemoryOpt, run);
