@@ -3458,6 +3458,32 @@ PostRADualIssue::visit(BasicBlock *bb)
 
 // =============================================================================
 
+class PostRAMoveInstUp : public Pass
+{
+private:
+   virtual bool visit(BasicBlock *);
+};
+
+bool
+PostRAMoveInstUp::visit(BasicBlock *bb)
+{
+   Instruction *i, *next;
+
+   for (i = bb->getEntry(); i; i = next) {
+      next = i->next;
+
+      if (i->op != OP_TEX)
+         continue;
+
+      while (i->prev && i->prev->op != i->op && i->prev->bb == bb && !i->prev->fixed && !i->prev->asFlow() && i->prev->isCommutationLegal(i))
+         bb->permuteAdjacent(i->prev, i);
+   }
+
+   return true;
+}
+
+// =============================================================================
+
 #define RUN_PASS(l, n, f)                       \
    if (level >= (l)) {                          \
       if (dbgFlags & NV50_IR_DEBUG_VERBOSE)     \
@@ -3497,6 +3523,7 @@ Program::optimizePostRA(int level)
    if (getTarget()->getChipset() < NVISA_GK20A_CHIPSET)
       RUN_PASS(2, NV50PostRaConstantFolding, run);
    RUN_PASS(1, PostRADeadCodeElim, buryAll);
+   RUN_PASS(2, PostRAMoveInstUp, run);
    RUN_PASS(2, PostRADualIssue, run);
 
    return true;
