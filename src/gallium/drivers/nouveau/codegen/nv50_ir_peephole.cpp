@@ -24,6 +24,9 @@
 #include "codegen/nv50_ir_target.h"
 #include "codegen/nv50_ir_build_util.h"
 
+#include <algorithm>
+#include <iostream>
+
 extern "C" {
 #include "util/u_math.h"
 }
@@ -3484,6 +3487,291 @@ PostRAMoveInstUp::visit(BasicBlock *bb)
 
 // =============================================================================
 
+class Reschedule : public Pass
+{
+private:
+   virtual bool visit(BasicBlock *);
+   void doReschedule();
+   void finalizeList();
+   void calcSchedulable();
+   bool isSchedulable(Instruction *);
+   bool checkSource(Instruction *);
+   void schedule();
+   Instruction *findBest();
+   uint32_t requiredTime(Value *);
+   uint32_t requiredTime(Instruction *);
+
+   typedef std::list<Instruction*> InstructionList;
+   typedef std::list<Value*> LiveValuesList;
+
+   InstructionList bbResult;
+   InstructionList mainIns;
+   InstructionList schedulable;
+   LiveValuesList  liveValues;
+
+   BasicBlock *bb;
+   const Target *targ;
+   int curSerial;
+};
+
+uint32_t
+Reschedule::requiredTime(Value *value)
+{
+   if (!value)
+      return 0;
+
+   Instruction *refSrc = value->getInsn();
+   if (refSrc == NULL)
+      return 0;
+
+   return refSrc->serial + targ->getThroughput(refSrc);
+}
+
+uint32_t
+Reschedule::requiredTime(Instruction *insn)
+{
+   uint32_t highestWait = 1;
+   for (int i = 0; insn->srcExists(i); i++) {
+      uint32_t wait = requiredTime(insn->getIndirect(i, 0));
+      if (wait > highestWait)
+         highestWait = wait;
+
+      wait = requiredTime(insn->getIndirect(i, 1));
+      if (wait > highestWait)
+         highestWait = wait;
+
+      wait = requiredTime(insn->getSrc(i));
+      if (wait > highestWait)
+         highestWait = wait;
+   }
+   return highestWait;
+}
+
+bool
+Reschedule::checkSource(Instruction *insn)
+{
+   if (insn == NULL || insn->bb != bb)
+      return true;
+
+   if (std::find(bbResult.begin(), bbResult.end(), insn) != bbResult.end())
+      return true;
+
+   return false;
+}
+
+bool
+Reschedule::isSchedulable(Instruction *insn)
+{
+   if (std::find(mainIns.begin(), mainIns.end(), insn) == mainIns.end())
+      return false;
+
+   if (std::find(schedulable.begin(), schedulable.end(), insn) != schedulable.end())
+      return false;
+
+   for (unsigned int i = 0; insn->srcExists(i); i++) {
+      if (insn->getIndirect(i, 0) != NULL &&
+           !checkSource(insn->getIndirect(i, 0)->getInsn()))
+         return false;
+
+      if (insn->getIndirect(i, 1) != NULL &&
+           !checkSource(insn->getIndirect(i, 1)->getInsn()))
+          return false;
+
+      Instruction *source = insn->getSrc(i)->getInsn();
+      if (checkSource(source))
+         continue;
+      else
+         return false;
+   }
+   return true;
+}
+
+void
+Reschedule::calcSchedulable()
+{
+   std::list<InstructionList::iterator> toDelete;
+   for (InstructionList::iterator it = mainIns.begin(); it != mainIns.end(); ++it) {
+      Instruction *insn = *it;
+
+      if (isSchedulable(insn)) {
+         schedulable.push_back(insn);
+         toDelete.push_back(it);
+      }
+   }
+
+   for (std::list<InstructionList::iterator>::iterator it = toDelete.begin(); it != toDelete.end(); ++it)
+      mainIns.erase(*it);
+}
+
+Instruction *
+Reschedule::findBest()
+{
+   return schedulable.front();
+}
+
+void
+Reschedule::schedule()
+{
+   Instruction *insn = findBest();
+   LiveValuesList dead;
+
+   if (!liveValues.empty()) {
+      for (LiveValuesList::iterator it = liveValues.begin(); it != liveValues.end(); ++it) {
+         Value *live = *it;
+         bool stillValid = false;
+         for (std::tr1::unordered_set<ValueRef *>::iterator it = live->uses.begin(); it != live->uses.end(); ++it) {
+            Instruction *ref = (*it)->getInsn();
+            if (std::find(schedulable.begin(), schedulable.end(), ref) != schedulable.end()) {
+               stillValid = true;
+               insn = ref;
+            }
+
+            if (!stillValid && std::find(schedulable.begin(), schedulable.end(), ref) != schedulable.end())
+               stillValid = true;
+         }
+
+         if (!stillValid)
+            dead.push_back(live);
+      }
+   }
+
+   for (LiveValuesList::iterator it = dead.begin(); it != dead.end(); ++it)
+      liveValues.remove(*it);
+
+   if (bbResult.empty())
+      insn->serial = 0;
+   else
+      insn->serial += 1;
+   this->curSerial = insn->serial;
+
+   bbResult.push_back(insn);
+   schedulable.remove(insn);
+
+   for (unsigned int i = 0; i < insn->defCount(); ++i) {
+      Value *def = insn->getDef(i);
+
+      if (def == NULL)
+         continue;
+
+      if (liveValues.empty() || std::find(liveValues.begin(), liveValues.end(), def) == liveValues.end())
+         liveValues.push_back(def);
+
+      for (std::tr1::unordered_set<ValueRef *>::iterator it = def->uses.begin(); it != def->uses.end(); ++it)
+      {
+          Instruction * ref = (*it)->getInsn();
+
+          if (isSchedulable(ref)) {
+              schedulable.push_back(ref);
+              mainIns.remove(ref);
+          }
+      }
+   }
+   // remove live values
+   for (unsigned int i = 0; i < insn->srcCount(); ++i) {
+      Value *src = insn->getSrc(i);
+
+      if (src == NULL)
+         continue;
+
+      if (std::find(liveValues.begin(), liveValues.end(), src) == liveValues.end())
+         continue;
+
+      if (schedulable.empty() && mainIns.empty()) {
+          liveValues.remove(src);
+          continue;
+      }
+
+      bool stillValid = false;
+      // check if uses are still valid
+      for (std::tr1::unordered_set<ValueRef *>::iterator it = src->uses.begin(); it != src->uses.end(); ++it) {
+         Instruction *ref = (*it)->getInsn();
+         if (std::find(schedulable.begin(), schedulable.end(), ref) != schedulable.end()) {
+            stillValid = true;
+            break;
+         }
+         if (std::find(mainIns.begin(), mainIns.end(), ref) != mainIns.end()) {
+            stillValid = true;
+            break;
+         }
+      }
+      if (!stillValid)
+         liveValues.remove(src);
+   }
+}
+
+void
+Reschedule::doReschedule()
+{
+   calcSchedulable();
+   while (!schedulable.empty())
+      schedule();
+
+   assert(mainIns.empty());
+   mainIns.clear();
+}
+
+void
+Reschedule::finalizeList()
+{
+   if (bbResult.empty())
+      return;
+
+   for (InstructionList::iterator it = bbResult.begin(); it != bbResult.end(); ++it)
+      bb->remove(*it);
+   assert(bb->getInsnCount() == 0);
+
+   Instruction *last, *current = bbResult.front();
+   int serial = 0;
+
+   // now fill it
+   current->prev = NULL;
+   current->next = NULL;
+   current->serial = serial++;
+   bb->insertHead(current);
+   assert(current->prev == NULL);
+   assert(current->next == NULL);
+   for (InstructionList::iterator it = ++bbResult.begin(); it != bbResult.end(); ++it) {
+      last = current;
+      current = *it;
+      current->serial = serial++;
+      bb->insertAfter(last, current);
+      assert(current->prev == last);
+      assert(current->next == NULL);
+      assert(last->next == current);
+   }
+}
+
+bool
+Reschedule::visit(BasicBlock *bb)
+{
+   Instruction *i, *next;
+   this->bb = bb;
+   this->targ = prog->getTarget();
+   this->curSerial = 0;
+
+   bbResult.clear();
+   mainIns.clear();
+   liveValues.clear();
+   for (i = bb->getFirst(); i; i = next) {
+      next = i->next;
+
+      if (i->fixed || i->asFlow() || i->op == OP_LOAD || i->op == OP_STORE || i->op == OP_PHI) {
+         doReschedule();
+         bbResult.push_back(i);
+         continue;
+      }
+
+      mainIns.push_back(i);
+   }
+
+   doReschedule();
+   finalizeList();
+
+   return true;
+}
+
+// =============================================================================
+
 #define RUN_PASS(l, n, f)                       \
    if (level >= (l)) {                          \
       if (dbgFlags & NV50_IR_DEBUG_VERBOSE)     \
@@ -3512,6 +3800,7 @@ Program::optimizeSSA(int level)
    RUN_PASS(2, MemoryOpt, run);
    RUN_PASS(2, LocalCSE, run);
    RUN_PASS(0, DeadCodeElim, buryAll);
+//   RUN_PASS(2, Reschedule, run);
 
    return true;
 }
