@@ -3484,6 +3484,46 @@ PostRAMoveInstUp::visit(BasicBlock *bb)
 
    return true;
 }
+// =============================================================================
+
+class MoveDown : public Pass
+{
+private:
+   virtual bool visit(BasicBlock *);
+   void moveIns(Instruction *i);
+};
+
+void
+MoveDown::moveIns(Instruction *i)
+{
+   while (i->next && i->bb == i->next->bb && !i->next->fixed && !i->next->asFlow()) {
+      for (Value::UseIterator it = i->getDef(0)->uses.begin(); it != i->getDef(0)->uses.end(); ++it) {
+         if ((*it)->getInsn() == i->next)
+            return;
+      }
+      i->bb->permuteAdjacent(i, i->next);
+   }
+}
+
+bool
+MoveDown::visit(BasicBlock *bb)
+{
+   Instruction *i, *next;
+
+   for (i = bb->getExit(); i; i = next) {
+      next = i->prev;
+
+      if (i->asFlow() || i->fixed || !i->next)
+         continue;
+
+      ImmediateValue imm;
+      if (!i->srcExists(0) || i->srcExists(1) || !i->src(0).getImmediate(imm))
+         continue;
+      moveIns(i);
+   }
+
+   return true;
+}
 
 // =============================================================================
 
@@ -3800,6 +3840,7 @@ Program::optimizeSSA(int level)
    RUN_PASS(2, MemoryOpt, run);
    RUN_PASS(2, LocalCSE, run);
    RUN_PASS(0, DeadCodeElim, buryAll);
+   RUN_PASS(2, MoveDown, run);
 //   RUN_PASS(2, Reschedule, run);
 
    return true;
