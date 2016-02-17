@@ -580,6 +580,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_shader_draw_parameters,       true,  false,     ARB_shader_draw_parameters),
    EXT(ARB_shader_image_load_store,      true,  false,     ARB_shader_image_load_store),
    EXT(ARB_shader_image_size,            true,  false,     ARB_shader_image_size),
+   EXT(ARB_shading_language_include,     true,  false,     dummy_true),
    EXT(ARB_shader_precision,             true,  false,     ARB_shader_precision),
    EXT(ARB_shader_stencil_export,        true,  false,     ARB_shader_stencil_export),
    EXT(ARB_shader_storage_buffer_object, true,  true,      ARB_shader_storage_buffer_object),
