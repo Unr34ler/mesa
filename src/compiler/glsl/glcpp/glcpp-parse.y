@@ -1311,7 +1311,7 @@ add_builtin_define(glcpp_parser_t *parser, const char *name, int value)
 }
 
 glcpp_parser_t *
-glcpp_parser_create(const struct gl_extensions *extensions, gl_api api)
+glcpp_parser_create(const struct gl_extensions *extensions, struct hash_table *includes, gl_api api)
 {
    glcpp_parser_t *parser;
 
@@ -1320,6 +1320,8 @@ glcpp_parser_create(const struct gl_extensions *extensions, gl_api api)
    glcpp_lex_init_extra (parser, &parser->scanner);
    parser->defines = hash_table_ctor(32, hash_table_string_hash,
                                      hash_table_string_compare);
+
+   parser->includes = includes;
    parser->active = NULL;
    parser->lexing_directive = 0;
    parser->space_tokens = 1;
@@ -1351,6 +1353,7 @@ glcpp_parser_create(const struct gl_extensions *extensions, gl_api api)
    parser->new_line_number = 1;
    parser->has_new_source_number = 0;
    parser->new_source_number = 0;
+   parser->include_depth = 0;
 
    return parser;
 }

@@ -171,7 +171,7 @@ glcpp_lex_update_state_per_token (glcpp_parser_t *parser, int token)
 	 * update the "Internal compiler error" catch-all rule near the end of
 	 * this file. */
 
-%x COMMENT DEFINE DONE HASH NEWLINE_CATCHUP UNREACHABLE
+%x COMMENT DEFINE DONE HASH NEWLINE_CATCHUP UNREACHABLE INCLUDE
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
@@ -315,9 +315,35 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	BEGIN INITIAL;
 	RETURN_STRING_TOKEN (PRAGMA);
 }
-<HASH>include{HSPACE}*(\"{PATH}\"|\<{PATH}\>){HSPACE}* {
-	BEGIN INITIAL;
-	RETURN_STRING_TOKEN (PRAGMA);
+
+<HASH>include{HSPACE}* {
+	BEGIN INCLUDE;
+}
+
+<INCLUDE>(\"{PATH}\"|\<{PATH}\>) {
+	char *string, *value = NULL;
+	int len = strlen(yytext);
+	char *key = malloc(sizeof(char) * (len - 1));
+
+	strncpy(key, yytext + 1, len - 2);
+	key[len - 2] = '\0';
+
+	if (parser->includes) {
+		value = hash_table_find (parser->includes, key);
+	}
+	if (value) {
+		string = malloc(sizeof(char) * strlen(value) + 1);
+		strcpy(string + 1, value);
+		string[0] = '\n';
+	} else {
+		printf("include failed for %s\n", key);
+		string = "\nin vec4 inPosition1;";
+	}
+
+	parser->buffers[parser->include_depth] = YY_CURRENT_BUFFER;
+	glcpp__switch_to_buffer(yy_scan_string(string, parser->scanner), parser->scanner);
+	++parser->include_depth;
+	BEGIN(INITIAL);
 }
 
 <HASH>line{HSPACE}+ {
@@ -558,7 +584,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	RETURN_TOKEN_NEVER_SKIP (NEWLINE);
 }
 
-<INITIAL,COMMENT,DEFINE,HASH><<EOF>> {
+<INITIAL,COMMENT,DEFINE,HASH,INCLUDE><<EOF>> {
 	if (YY_START == COMMENT)
 		glcpp_error(yylloc, yyextra, "Unterminated comment");
 	BEGIN DONE; /* Don't keep matching this rule forever. */

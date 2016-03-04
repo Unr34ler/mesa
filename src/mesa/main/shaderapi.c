@@ -59,6 +59,7 @@
 #include "util/ralloc.h"
 #include "util/hash_table.h"
 #include "util/mesa-sha1.h"
+#include "mesa/program/hash_table.h"
 
 
 /**
@@ -1921,6 +1922,7 @@ _mesa_LinkProgram(GLuint programObj)
 }
 
 
+extern struct hash_table *includes;
 void GLAPIENTRY
 _mesa_NamedStringARB(GLenum type, GLint namelen, const GLchar *name,
                      GLint stringlen, const GLchar *string)
@@ -1937,14 +1939,14 @@ _mesa_NamedStringARB(GLenum type, GLint namelen, const GLchar *name,
       _mesa_error(ctx, GL_INVALID_VALUE, "glNamedStringARB(string is NULL)");
       return;
    }
-   if (!include_node_validate_name(namelen, name)) {
+   if (!include_node_validate_name(namelen, strdup(name))) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glNamedStringARB(invalid name)");
       return;
    }
 
    mtx_lock(&include_mutex);
 
-   node = include_node_create_tree(namelen, name);
+   node = include_node_create_tree(namelen, strdup(name));
    if (!node) {
       mtx_unlock(&include_mutex);
       return;
@@ -1953,7 +1955,7 @@ _mesa_NamedStringARB(GLenum type, GLint namelen, const GLchar *name,
    len = 1 + (stringlen < 0 ? strlen(string) : stringlen);
    copy = malloc(len);
    if (!copy) {
-      include_node_remove_tree(namelen, name);
+      include_node_remove_tree(namelen, strdup(name));
       mtx_unlock(&include_mutex);
       return;
    }
@@ -1964,6 +1966,11 @@ _mesa_NamedStringARB(GLenum type, GLint namelen, const GLchar *name,
       free(node->IncludeString);
    node->IncludeString = copy;
    node->StringLen = len;
+   if (!includes)
+      includes = hash_table_ctor(64, hash_table_string_hash, hash_table_string_compare);
+   char *tmp = malloc(sizeof(char) * strlen(string));
+   strcpy(tmp, string);
+   hash_table_insert(includes, tmp, strdup(name));
 
    mtx_unlock(&include_mutex);
 }

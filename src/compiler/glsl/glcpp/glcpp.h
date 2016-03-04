@@ -174,6 +174,7 @@ typedef struct active_list {
 struct glcpp_parser {
 	yyscan_t scanner;
 	struct hash_table *defines;
+	struct hash_table *includes;
 	active_list_t *active;
 	int lexing_directive;
 	int lexing_version_directive;
@@ -202,12 +203,14 @@ struct glcpp_parser {
 	bool has_new_source_number;
 	int new_source_number;
 	bool is_gles;
+	int include_depth;
+	void *buffers[10];
 };
 
 struct gl_extensions;
 
 glcpp_parser_t *
-glcpp_parser_create (const struct gl_extensions *extensions, gl_api api);
+glcpp_parser_create (const struct gl_extensions *extensions, struct hash_table *includes, gl_api api);
 
 int
 glcpp_parser_parse (glcpp_parser_t *parser);
