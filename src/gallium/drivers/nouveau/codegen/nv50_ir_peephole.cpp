@@ -1558,6 +1558,7 @@ private:
    void handleCVT_NEG(Instruction *);
    void handleCVT_CVT(Instruction *);
    void handleCVT_EXTBF(Instruction *);
+   void handleCVT_AND_BOOL(Instruction *);
    void handleSUCLAMP(Instruction *);
    void handleNEG(Instruction *);
 
@@ -1993,6 +1994,39 @@ AlgebraicOpt::handleCVT_EXTBF(Instruction *cvt)
    cvt->subOp = offset >> 3;
 }
 
+void
+AlgebraicOpt::handleCVT_AND_BOOL(Instruction *insn)
+{
+   if (!isFloatType(insn->dType) || isFloatType(insn->sType))
+      return;
+
+   Instruction *andInsn = insn->getSrc(0)->getInsn();
+   if (andInsn->op != OP_AND)
+      return;
+
+   ImmediateValue imm;
+   int b;
+   if (andInsn->src(0).getImmediate(imm))
+      b = 1;
+   else if (andInsn->src(1).getImmediate(imm))
+      b = 0;
+   else
+      return;
+
+   if (!imm.isInteger(1))
+      return;
+
+   Instruction *setInsn = andInsn->getSrc(b)->getInsn();
+   if (setInsn->op != OP_SET || isFloatType(setInsn->dType))
+      return;
+
+   bld.setPosition(insn, false);
+   Instruction *setNew = bld.mkCmp(setInsn->op, setInsn->cc,
+                                   insn->dType, bld.getSSA(),
+                                   setInsn->sType, setInsn->getSrc(0), setInsn->getSrc(1));
+   insn->def(0).replace(setNew->getDef(0), false);
+}
+
 // SUCLAMP dst, (ADD b imm), k, 0 -> SUCLAMP dst, b, k, imm (if imm fits s6)
 void
 AlgebraicOpt::handleSUCLAMP(Instruction *insn)
@@ -2095,6 +2129,7 @@ AlgebraicOpt::visit(BasicBlock *bb)
          handleCVT_CVT(i);
          if (prog->getTarget()->isOpSupported(OP_EXTBF, TYPE_U32))
              handleCVT_EXTBF(i);
+         handleCVT_AND_BOOL(i);
          break;
       case OP_SUCLAMP:
          handleSUCLAMP(i);
