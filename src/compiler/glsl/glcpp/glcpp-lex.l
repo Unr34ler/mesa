@@ -587,6 +587,12 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 <INITIAL,COMMENT,DEFINE,HASH,INCLUDE><<EOF>> {
 	if (YY_START == COMMENT)
 		glcpp_error(yylloc, yyextra, "Unterminated comment");
+	if (parser->include_depth != 0) {
+		--parser->include_depth;
+		glcpp__switch_to_buffer(parser->buffers[parser->include_depth], parser->scanner);
+	}
+
+
 	BEGIN DONE; /* Don't keep matching this rule forever. */
 	yyextra->lexing_directive = 0;
 	yyextra->lexing_version_directive = 0;
