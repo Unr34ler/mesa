@@ -1614,13 +1614,22 @@ NVC0LoweringPass::processSurfaceCoordsNVE4(TexInstruction *su)
 
    // calculate clamped coordinates
    for (c = 0; c < arg; ++c) {
+      int subOp = getSuClampSubOp(su, c);
+
       src[c] = bld.getScratch();
-      if (c == 0 && raw)
+      if (c == 0 && raw) {
          v = loadSuInfo32(NULL, base + NVE4_SU_INFO_RAW_X);
-      else
-         v = loadSuInfo32(NULL, base + NVE4_SU_INFO_DIM(c));
+      } else {
+         if (c == 1 && su->tex.target == TEX_TARGET_1D_ARRAY) {
+            // The array index is stored in the Z component for 1D arrays.
+            v = loadSuInfo32(NULL, base + NVE4_SU_INFO_DIM(2));
+            subOp = getSuClampSubOp(su, 2);
+         } else {
+            v = loadSuInfo32(NULL, base + NVE4_SU_INFO_DIM(c));
+         }
+      }
       bld.mkOp3(OP_SUCLAMP, TYPE_S32, src[c], su->getSrc(c), v, zero)
-         ->subOp = getSuClampSubOp(su, c);
+         ->subOp = subOp;
    }
    for (; c < 3; ++c)
       src[c] = zero;
