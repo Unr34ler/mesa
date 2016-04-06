@@ -1561,9 +1561,17 @@ NVC0LoweringPass::adjustCoordinatesMS(TexInstruction *tex)
    Value *s = tex->getSrc(arg - 1);
 
    Value *tx = bld.getSSA(), *ty = bld.getSSA(), *ts = bld.getSSA();
+   Value *ind = NULL;
 
-   Value *ms_x = loadSuInfo32(NULL, base + NVE4_SU_INFO_MS(0));
-   Value *ms_y = loadSuInfo32(NULL, base + NVE4_SU_INFO_MS(1));
+   if (tex->tex.rIndirectSrc >= 0) {
+      // FIXME: out of bounds
+      ind = bld.mkOp2v(OP_SHL, TYPE_U32, bld.getSSA(),
+                       tex->getIndirectR(), bld.mkImm(6));
+      tex->tex.r = 0xff;
+   }
+
+   Value *ms_x = loadSuInfo32(ind, base + NVE4_SU_INFO_MS(0));
+   Value *ms_y = loadSuInfo32(ind, base + NVE4_SU_INFO_MS(1));
 
    bld.mkOp2(OP_SHL, TYPE_U32, tx, x, ms_x);
    bld.mkOp2(OP_SHL, TYPE_U32, ty, y, ms_y);
@@ -1602,6 +1610,7 @@ NVC0LoweringPass::processSurfaceCoordsNVE4(TexInstruction *su)
    Value *src[3];
    Value *bf, *eau, *off;
    Value *addr, *pred;
+   Value *ind = NULL;
 
    off = bld.getScratch(4);
    bf = bld.getScratch(4);
@@ -1612,20 +1621,27 @@ NVC0LoweringPass::processSurfaceCoordsNVE4(TexInstruction *su)
 
    adjustCoordinatesMS(su);
 
+   if (su->tex.rIndirectSrc >= 0) {
+      // FIXME: out of bounds
+      ind = bld.mkOp2v(OP_SHL, TYPE_U32, bld.getSSA(),
+                       su->getIndirectR(), bld.mkImm(6));
+      su->tex.r = 0xff;
+   }
+
    // calculate clamped coordinates
    for (c = 0; c < arg; ++c) {
       int subOp = getSuClampSubOp(su, c);
 
       src[c] = bld.getScratch();
       if (c == 0 && raw) {
-         v = loadSuInfo32(NULL, base + NVE4_SU_INFO_RAW_X);
+         v = loadSuInfo32(ind, base + NVE4_SU_INFO_RAW_X);
       } else {
          if (c == 1 && su->tex.target == TEX_TARGET_1D_ARRAY) {
             // The array index is stored in the Z component for 1D arrays.
-            v = loadSuInfo32(NULL, base + NVE4_SU_INFO_DIM(2));
+            v = loadSuInfo32(ind, base + NVE4_SU_INFO_DIM(2));
             subOp = getSuClampSubOp(su, 2);
          } else {
-            v = loadSuInfo32(NULL, base + NVE4_SU_INFO_DIM(c));
+            v = loadSuInfo32(ind, base + NVE4_SU_INFO_DIM(c));
          }
       }
       bld.mkOp3(OP_SUCLAMP, TYPE_S32, src[c], su->getSrc(c), v, zero)
@@ -1649,16 +1665,16 @@ NVC0LoweringPass::processSurfaceCoordsNVE4(TexInstruction *su)
          bld.mkOp2(OP_AND, TYPE_U32, off, src[0], bld.loadImm(NULL, 0xffff));
    } else
    if (dim == 3) {
-      v = loadSuInfo32(NULL, base + NVE4_SU_INFO_UNK1C);
+      v = loadSuInfo32(ind, base + NVE4_SU_INFO_UNK1C);
       bld.mkOp3(OP_MADSP, TYPE_U32, off, src[2], v, src[1])
          ->subOp = NV50_IR_SUBOP_MADSP(4,2,8); // u16l u16l u16l
 
-      v = loadSuInfo32(NULL, base + NVE4_SU_INFO_PITCH);
+      v = loadSuInfo32(ind, base + NVE4_SU_INFO_PITCH);
       bld.mkOp3(OP_MADSP, TYPE_U32, off, off, v, src[0])
          ->subOp = NV50_IR_SUBOP_MADSP(0,2,8); // u32 u16l u16l
    } else {
       assert(dim == 2);
-      v = loadSuInfo32(NULL, base + NVE4_SU_INFO_PITCH);
+      v = loadSuInfo32(ind, base + NVE4_SU_INFO_PITCH);
       bld.mkOp3(OP_MADSP, TYPE_U32, off, src[1], v, src[0])
          ->subOp = (su->tex.target.isArray() || su->tex.target.isCube()) ?
          NV50_IR_SUBOP_MADSP_SD : NV50_IR_SUBOP_MADSP(4,2,8); // u16l u16l u16l
@@ -1669,7 +1685,7 @@ NVC0LoweringPass::processSurfaceCoordsNVE4(TexInstruction *su)
       if (raw) {
          bf = src[0];
       } else {
-         v = loadSuInfo32(NULL, base + NVE4_SU_INFO_FMT);
+         v = loadSuInfo32(ind, base + NVE4_SU_INFO_FMT);
          bld.mkOp3(OP_VSHL, TYPE_U32, bf, src[0], v, zero)
             ->subOp = NV50_IR_SUBOP_V1(7,6,8|2);
       }
@@ -1686,7 +1702,7 @@ NVC0LoweringPass::processSurfaceCoordsNVE4(TexInstruction *su)
       case 2:
          z = off;
          if (!su->tex.target.isArray() && !su->tex.target.isCube()) {
-            z = loadSuInfo32(NULL, base + NVE4_SU_INFO_UNK1C);
+            z = loadSuInfo32(ind, base + NVE4_SU_INFO_UNK1C);
             subOp = NV50_IR_SUBOP_SUBFM_3D;
          }
          break;
@@ -1701,7 +1717,7 @@ NVC0LoweringPass::processSurfaceCoordsNVE4(TexInstruction *su)
    }
 
    // part 2
-   v = loadSuInfo32(NULL, base + NVE4_SU_INFO_ADDR);
+   v = loadSuInfo32(ind, base + NVE4_SU_INFO_ADDR);
 
    if (su->tex.target == TEX_TARGET_BUFFER) {
       eau = v;
@@ -1710,7 +1726,7 @@ NVC0LoweringPass::processSurfaceCoordsNVE4(TexInstruction *su)
    }
    // add array layer offset
    if (su->tex.target.isArray() || su->tex.target.isCube()) {
-      v = loadSuInfo32(NULL, base + NVE4_SU_INFO_ARRAY);
+      v = loadSuInfo32(ind, base + NVE4_SU_INFO_ARRAY);
       if (dim == 1)
          bld.mkOp3(OP_MADSP, TYPE_U32, eau, src[1], v, eau)
             ->subOp = NV50_IR_SUBOP_MADSP(4,0,0); // u16 u24 u32
@@ -1750,7 +1766,7 @@ NVC0LoweringPass::processSurfaceCoordsNVE4(TexInstruction *su)
 
    // let's just set it 0 for raw access and hope it works
    v = raw ?
-      bld.mkImm(0) : loadSuInfo32(NULL, base + NVE4_SU_INFO_FMT);
+      bld.mkImm(0) : loadSuInfo32(ind, base + NVE4_SU_INFO_FMT);
 
    // get rid of old coordinate sources, make space for fmt info and predicate
    su->moveSources(arg, 3 - arg);
