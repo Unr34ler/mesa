@@ -890,6 +890,7 @@ nve4_set_surface_info(struct nouveau_pushbuf *push,
             address += mt->layer_stride * z;
          }
       }
+      address += lvl->offset;
 
       if (res->base.target == PIPE_TEXTURE_CUBE_ARRAY)
          depth = view->u.tex.last_layer - view->u.tex.first_layer + 1;
