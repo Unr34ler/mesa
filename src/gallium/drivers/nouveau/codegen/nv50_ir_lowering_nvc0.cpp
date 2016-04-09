@@ -1509,9 +1509,36 @@ static inline uint16_t getSuClampSubOp(const TexInstruction *su, int c)
 }
 
 bool
-NVC0LoweringPass::handleSUQ(Instruction *suq)
+NVC0LoweringPass::handleSUQ(TexInstruction *suq)
 {
-   /* TODO: will be updated in the next commit. */
+   int dim = suq->tex.target.getDim();
+   int arg = dim + (suq->tex.target.isArray() || suq->tex.target.isCube());
+   uint8_t s = prog->driver->io.auxCBSlot;
+   Value *ind = suq->getIndirectR();
+   uint32_t base;
+   int c;
+
+   base = prog->driver->io.suInfoBase + suq->tex.r * NVE4_SU_INFO__STRIDE;
+
+   if (ind)
+      ind = bld.mkOp2v(OP_SHL, TYPE_U32, bld.getScratch(),
+                       ind, bld.mkImm(6));
+
+   for (c = 0; c < arg; ++c) {
+      if (suq->defExists(c)) {
+         int offset;
+
+         if (c == 1 && suq->tex.target == TEX_TARGET_1D_ARRAY) {
+            offset = base + NVE4_SU_INFO_SIZE(2);
+         } else {
+            offset = base + NVE4_SU_INFO_SIZE(c);
+         }
+         bld.mkLoad(TYPE_U32, suq->getDef(c),
+                    bld.mkSymbol(FILE_MEMORY_CONST, s, TYPE_U32, offset), ind);
+      }
+   }
+
+   bld.remove(suq);
    return true;
 }
 
@@ -2263,7 +2290,7 @@ NVC0LoweringPass::visit(Instruction *i)
          handleSurfaceOpNVE4(i->asTex());
       break;
    case OP_SUQ:
-      handleSUQ(i);
+      handleSUQ(i->asTex());
       break;
    case OP_BUFQ:
       handleBUFQ(i);
