@@ -743,6 +743,49 @@ static const uint8_t nve4_su_format_map[PIPE_FORMAT_COUNT];
 static const uint16_t nve4_su_format_aux_map[PIPE_FORMAT_COUNT];
 static const uint16_t nve4_suldp_lib_offset[PIPE_FORMAT_COUNT];
 
+static void
+nvc0_get_surface_dims(struct pipe_image_view *view, int *width, int *height,
+                      int *depth)
+{
+   struct nv04_resource *res = nv04_resource(view->resource);
+   int level;
+
+   *width = *height = *depth = 1;
+   if (res->base.target == PIPE_BUFFER) {
+      *width = view->u.buf.last_element - view->u.buf.first_element + 1;
+      return;
+   }
+
+   level = view->u.tex.level;
+   *width = u_minify(view->resource->width0, level);
+   switch (res->base.target) {
+   case PIPE_TEXTURE_1D_ARRAY:
+      *depth = view->u.tex.last_layer - view->u.tex.first_layer + 1;
+      /* fallthrough */
+   case PIPE_TEXTURE_1D:
+      break;
+   case PIPE_TEXTURE_CUBE:
+   case PIPE_TEXTURE_2D_ARRAY:
+      *depth = view->u.tex.last_layer - view->u.tex.first_layer + 1;
+      /* fallthrough */
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_RECT:
+      *height = u_minify(view->resource->height0, level);
+      break;
+   case PIPE_TEXTURE_3D:
+      *height = u_minify(view->resource->height0, level);
+      *depth  = u_minify(view->resource->depth0, level);
+      break;
+   case PIPE_TEXTURE_CUBE_ARRAY:
+      *height = u_minify(view->resource->height0, level);
+      *depth  = (view->u.tex.last_layer - view->u.tex.first_layer + 1) / 6;
+      break;
+   default:
+      assert(!"unexpected texture target");
+      break;
+   }
+}
+
 void
 nve4_set_surface_info(struct nouveau_pushbuf *push,
                       struct pipe_image_view *view,
@@ -772,9 +815,8 @@ nve4_set_surface_info(struct nouveau_pushbuf *push,
 
    address = res->address;
 
-   width = u_minify(view->resource->width0, view->u.tex.level);
-   height = u_minify(view->resource->height0, view->u.tex.level);
-   depth = u_minify(view->resource->depth0, view->u.tex.level);
+   /* get surface dimensions based on the target. */
+   nvc0_get_surface_dims(view, &width, &height, &depth);
 
    info[8] = width;
    info[9] = height;
@@ -848,6 +890,10 @@ nve4_set_surface_info(struct nouveau_pushbuf *push,
             address += mt->layer_stride * z;
          }
       }
+
+      if (res->base.target == PIPE_TEXTURE_CUBE_ARRAY)
+         depth = view->u.tex.last_layer - view->u.tex.first_layer + 1;
+
       info[0]  = address >> 8;
       info[2]  = width - 1;
       /* NOTE: this is really important: */
