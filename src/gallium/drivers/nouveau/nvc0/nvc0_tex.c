@@ -889,7 +889,8 @@ nve4_set_surface_info(struct nouveau_pushbuf *push,
          if (mt->layout_3d) {
             address += nvc0_mt_zslice_offset(mt, view->u.tex.level, z);
             /* doesn't work if z passes z-tile boundary */
-            assert(depth == 1);
+            if (depth > 1)
+               debug_printf("3D images are not really supported!");
          } else {
             address += mt->layer_stride * z;
          }
