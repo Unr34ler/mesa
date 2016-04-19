@@ -2744,7 +2744,7 @@ FlatteningPass::predicateInstructions(BasicBlock *bb, Value *pred, CondCode cc)
 bool
 FlatteningPass::mayPredicate(const Instruction *insn, const Value *pred) const
 {
-   if (insn->isPseudo())
+   if (insn->isPseudo() || !pred)
       return true;
    // TODO: calls where we don't know which registers are modified
 
@@ -2853,9 +2853,8 @@ FlatteningPass::tryPredicateConditional(BasicBlock *bb)
 
    assert(bb->getExit());
    Value *pred = bb->getExit()->getPredicate();
-   assert(pred);
 
-   if (isConstantCondition(pred))
+   if (pred && isConstantCondition(pred))
       limit = 4;
 
    Graph::EdgeIterator ei = bb->cfg.outgoing();
@@ -3363,6 +3362,77 @@ DeadCodeElim::checkSplitLoad(Instruction *ld1)
 
 // =============================================================================
 
+// Remove computations of unused values.
+class BranchElim : public Pass
+{
+private:
+   virtual bool visit(Function *);
+   bool visit(BasicBlock *, BasicBlock *);
+   BasicBlock *getChainedBlock(FlowInstruction *, bool);
+};
+
+bool
+BranchElim::visit(Function *)
+{
+   BasicBlock *last, *next;
+   for (IteratorRef bbIter = func->cfg.iteratorCFG(); !bbIter->end();) {
+      last = BasicBlock::get(reinterpret_cast<Graph::Node *>(bbIter->get()));
+
+      bbIter->next();
+      if (bbIter->end())
+         break;
+
+      next = BasicBlock::get(reinterpret_cast<Graph::Node *>(bbIter->get()));
+      visit(last, next);
+   }
+
+   return true;
+}
+
+bool
+BranchElim::visit(BasicBlock *bb, BasicBlock *bbNext)
+{
+   Instruction *insn = bb->getExit();
+   Instruction *next;
+
+   if (!insn || !insn->asFlow() || insn->next || !insn->isPredicated())
+      return true;
+
+   next = bbNext->getEntry();
+   if (!next || !next->asFlow() || next->isPredicated())
+      return true;
+
+   BasicBlock *from_bb = getChainedBlock(insn->asFlow(), false);
+   BasicBlock *from_next = getChainedBlock(next->asFlow(), true);
+
+   if (from_bb == from_next) {
+      delete_Instruction(prog, insn);
+   }
+
+   return true;
+}
+
+BasicBlock *
+BranchElim::getChainedBlock(FlowInstruction *flow, bool strict)
+{
+   if (flow->next)
+      return flow->bb;
+
+   if (strict && flow->isPredicated())
+      return flow->bb;
+
+   if (!flow->target.bb)
+      return flow->bb;
+
+   Instruction *insn = flow->target.bb->getEntry();
+   if (!insn || !insn->asFlow())
+      return flow->target.bb;
+
+   return getChainedBlock(insn->asFlow(), true);
+}
+
+// =============================================================================
+
 #define RUN_PASS(l, n, f)                       \
    if (level >= (l)) {                          \
       if (dbgFlags & NV50_IR_DEBUG_VERBOSE)     \
@@ -3387,6 +3457,7 @@ Program::optimizeSSA(int level)
    RUN_PASS(1, IndirectPropagation, run);
    RUN_PASS(2, MemoryOpt, run);
    RUN_PASS(2, LocalCSE, run);
+   RUN_PASS(1, BranchElim, run);
    RUN_PASS(0, DeadCodeElim, buryAll);
 
    return true;
