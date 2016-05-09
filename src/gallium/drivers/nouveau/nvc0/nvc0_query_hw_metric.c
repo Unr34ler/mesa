@@ -35,10 +35,10 @@ struct nvc0_hw_metric_cfg {
    _Q(INST_ISSUED,               "metric-inst_issued",            UINT64      ),
    _Q(INST_PER_WRAP,             "metric-inst_per_wrap",          UINT64      ),
    _Q(INST_REPLAY_OVERHEAD,      "metric-inst_replay_overhead",   UINT64      ),
-   _Q(ISSUED_IPC,                "metric-issued_ipc",             UINT64      ),
+   _Q(ISSUED_IPC,                "metric-issued_ipc",             PERCENTAGE  ),
    _Q(ISSUE_SLOTS,               "metric-issue_slots",            UINT64      ),
    _Q(ISSUE_SLOT_UTILIZATION,    "metric-issue_slot_utilization", PERCENTAGE  ),
-   _Q(IPC,                       "metric-ipc",                    UINT64      ),
+   _Q(IPC,                       "metric-ipc",                    PERCENTAGE  ),
    _Q(SHARED_REPLAY_OVERHEAD,    "metric-shared_replay_overhead", UINT64      ),
 };
 
@@ -469,7 +469,7 @@ sm20_hw_metric_calc_result(struct nvc0_hw_query *hq, uint64_t res64[8])
    case NVC0_HW_METRIC_QUERY_IPC:
       /* inst_executed / active_cycles */
       if (res64[1])
-         return res64[0] / (double)res64[1];
+         return (res64[0] / (double)res64[1]) * 100;
       break;
    default:
       debug_printf("invalid metric type: %d\n",
@@ -549,7 +549,7 @@ sm30_hw_metric_calc_result(struct nvc0_hw_query *hq, uint64_t res64[8])
    case NVC0_HW_METRIC_QUERY_ISSUED_IPC:
       /* metric-inst_issued / active_cycles */
       if (res64[2])
-         return (res64[0] + res64[1] * 2) / (double)res64[2];
+         return ((res64[0] + res64[1] * 2) / (double)res64[2]) * 100;
       break;
    case NVC0_HW_METRIC_QUERY_ISSUE_SLOTS:
       /* inst_issued1 + inst_issued2 */
