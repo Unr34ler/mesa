@@ -3454,6 +3454,243 @@ PostRADualIssue::visit(BasicBlock *bb)
 
 // =============================================================================
 
+// merges simple if clauses into a slct instruction
+//
+// it will scan each BB for phi instruction with sources with src.bb.entry == src.bb.exit == src
+// and easy to fold operations:
+//
+// BB:1 => BB:2,BB:3
+//   set $p0 ge $r0 neg $r0
+//   $p0 bra BB:3
+// BB:2
+//   neg $r1 $r0
+// BB:3
+//   abs $r2 $r0
+// BB:4
+//   phi $r3 $r2 $r1
+// ==>
+// BB:1 => BB:2,BB:3
+//   set $p0 ge $r0 neg $r0
+//   $p0 bra BB:3
+// BB:2
+//   neg $r1 $r0
+// BB:3
+//   abs $r2 $r0
+// BB:4
+//   slct $r0 abs $r0 neg $r0 $r0
+// and everything else should be DCEed away
+class SELFolding : public Pass
+{
+private:
+   virtual bool visit(BasicBlock *);
+   bool canMerge(Instruction *);
+
+   void handlePred(BasicBlock *, Instruction *bra, Instruction *phi, Instruction *, bool, Instruction *, bool);
+   void tryMergeSELPnSET(Instruction *);
+
+   BuildUtil bld;
+};
+
+void
+SELFolding::tryMergeSELPnSET(Instruction *selp)
+{
+   Instruction *set = selp->getSrc(2)->getUniqueInsn();
+   if (set->op != OP_SET)
+      return;
+
+   if (set->getSrc(0) != set->getSrc(1)) {
+      ImmediateValue imm1;
+      if (!set->src(1).getImmediate(imm1))
+         return;
+      if (!imm1.isInteger(0))
+         return;
+   } else if ((set->src(0).mod | set->src(1).mod) != Modifier(NV50_IR_MOD_NEG))
+      return;
+
+   CondCode cc = set->asCmp()->setCond;
+   if (selp->src(2).mod & Modifier(NV50_IR_MOD_NOT))
+      cc = inverseCondCode(cc);
+
+   bld.setPosition(selp, false);
+   CmpInstruction *slct = bld.mkCmp(OP_SLCT, cc, selp->dType, selp->getDef(0), set->sType, selp->getSrc(0), selp->getSrc(1), set->getSrc(0));
+   slct->src(0).mod = selp->src(0).mod;
+   slct->src(1).mod = selp->src(1).mod;
+   delete_Instruction(prog, selp);
+}
+
+void
+SELFolding::handlePred(BasicBlock *bb, Instruction *bra, Instruction *phi, Instruction *taken, bool m0, Instruction* nonTaken, bool m1)
+{
+   bld.setPosition(bb->getEntry(), bb->getEntry()->op == OP_JOIN);
+   Instruction *selp = bld.mkOp3(OP_SELP, phi->dType, phi->getDef(0), NULL, NULL, bra->getPredicate());
+   if (bra->cc == CC_NOT_P)
+      selp->src(2).mod = Modifier(NV50_IR_MOD_NOT);
+
+   if (m0 && !m1) {
+      ImmediateValue imm;
+      if (taken->src(0).getImmediate(imm)) {
+         // flip the sources when we can immediate a value
+         if (!prog->getTarget()->insnCanLoad(selp, 1, taken)) {
+            delete_Instruction(prog, selp);
+            return;
+         }
+
+         selp->setSrc(0, nonTaken->getDef(0));
+         selp->setSrc(1, taken->getSrc(0));
+         selp->src(1).mod = Modifier(taken->op);
+         selp->src(2).mod = selp->src(2).mod ^ Modifier(NV50_IR_MOD_NOT);
+      } else {
+         selp->setSrc(0, taken->getSrc(0));
+         selp->setSrc(1, nonTaken->getDef(0));
+         selp->src(0).mod = Modifier(taken->op);
+      }
+   } else if (!m0 && m1 && prog->getTarget()->insnCanLoad(selp, 1, nonTaken)) {
+      selp->setSrc(0, taken->getDef(0));
+      selp->setSrc(1, nonTaken->getSrc(0));
+      selp->src(1).mod = Modifier(nonTaken->op);
+   } else if (m0 && m1) {
+      ImmediateValue imm0;
+      ImmediateValue imm1;
+      bool i0 = taken->src(0).getImmediate(imm0);
+      bool i1 = nonTaken->src(0).getImmediate(imm1);
+
+      if (i1 && prog->getTarget()->insnCanLoad(selp, 1, nonTaken)) {
+         if (i0)
+            selp->setSrc(0, taken->getDef(0));
+         else {
+            selp->setSrc(0, taken->getSrc(0));
+            selp->src(0).mod = Modifier(taken->op);
+         }
+         selp->setSrc(1, nonTaken->getSrc(0));
+         selp->src(1).mod = Modifier(nonTaken->op);
+      } else if (i0 && prog->getTarget()->insnCanLoad(selp, 1, taken)) {
+         if (i1)
+            selp->setSrc(0, nonTaken->getDef(0));
+         else {
+            selp->setSrc(0, nonTaken->getSrc(0));
+            selp->src(0).mod = Modifier(nonTaken->op);
+         }
+         selp->src(1).mod = Modifier(taken->op);
+         selp->src(2).mod = selp->src(2).mod ^ Modifier(NV50_IR_MOD_NOT);
+      } else if (!i0 && !i1) {
+         selp->setSrc(0, taken->getSrc(0));
+         selp->setSrc(0, nonTaken->getSrc(0));
+         selp->src(0).mod = Modifier(taken->op);
+         selp->src(1).mod = Modifier(nonTaken->op);
+      } else {
+         delete_Instruction(prog, selp);
+         return;
+      }
+   } else {
+      delete_Instruction(prog, selp);
+      return;
+   }
+
+   delete_Instruction(prog, phi);
+   tryMergeSELPnSET(selp);
+}
+
+// check for simple ops in single op BBs for now
+bool
+SELFolding::canMerge(Instruction *insn)
+{
+   switch (insn->op) {
+   case OP_MOV:
+   case OP_NEG:
+      return true;
+   default:
+      return false;
+   }
+   return true;
+}
+
+bool
+SELFolding::visit(BasicBlock *bb)
+{
+   Instruction *next;
+   for (Instruction *phi = bb->getPhi(); phi && phi != bb->getEntry() && phi->op == OP_PHI; phi = next) {
+      next = phi->next;
+      Instruction *insn0 = phi->getSrc(0)->getUniqueInsn();
+      Instruction *insn1 = phi->getSrc(1)->getUniqueInsn();
+      bool canMerge0 = canMerge(insn0);
+      bool canMerge1 = canMerge(insn1);
+
+      if (!canMerge0 && !canMerge1)
+         continue;
+      if (!canMerge0 && !insn1->bb->reachableBy(insn0->bb, bb))
+         continue;
+      if (!canMerge1 && !insn0->bb->reachableBy(insn1->bb, bb))
+         continue;
+
+      BasicBlock *common;
+      if (canMerge0 && canMerge1) {
+         // search common BB
+         continue;
+      } else if (!canMerge0)
+         common = insn0->bb;
+      else if (!canMerge1)
+         common = insn1->bb;
+      else
+         continue;
+
+      Instruction *bra = NULL;
+      if (canMerge0 && canMerge1) {
+         for (Graph::EdgeIterator eIt = common->cfg.outgoing(); !eIt.end(); eIt.next()) {
+            BasicBlock *it = BasicBlock::get(eIt.getNode());
+            if (insn0->bb == it) {
+               if (bra && bra != common->getExit()) {
+                  bra = NULL;
+                  break;
+               }
+               bra = common->getExit();
+            }
+            if (insn1->bb == it) {
+               if (bra && bra != common->getExit()) {
+                  bra = NULL;
+                  break;
+               }
+               bra = common->getExit();
+            }
+         }
+      } else {
+         Instruction *branched = canMerge0 ? insn0 : insn1;
+         for (Graph::EdgeIterator eIt = branched->bb->cfg.incident(); !eIt.end(); eIt.next()) {
+            BasicBlock *it = BasicBlock::get(eIt.getNode());
+            Instruction *exit = it->getExit();
+            if (exit->op != OP_BRA)
+              continue;
+            if (bra) {
+               bra = NULL;
+               break;
+            }
+            bra = exit;
+         }
+      }
+
+      if (!bra || !bra->isPredicated())
+         continue;
+
+      Instruction *taken, *nonTaken;
+      bool mergeTaken, mergeNonTaken;
+      if (insn0->bb == bra->asFlow()->target.bb) {
+         taken = insn0;
+         mergeTaken = canMerge0;
+         nonTaken = insn1;
+         mergeNonTaken = canMerge1;
+      } else {
+         taken = insn1;
+         mergeTaken = canMerge1;
+         nonTaken = insn0;
+         mergeNonTaken = canMerge0;
+      }
+
+      handlePred(bb, bra, phi, taken, mergeTaken, nonTaken, mergeNonTaken);
+   }
+   return true;
+}
+
+// =============================================================================
+
 #define RUN_PASS(l, n, f)                       \
    if (level >= (l)) {                          \
       if (dbgFlags & NV50_IR_DEBUG_VERBOSE)     \
@@ -3475,6 +3712,7 @@ Program::optimizeSSA(int level)
       RUN_PASS(2, AlgebraicOpt, run);
       RUN_PASS(2, ModifierFolding, run); // before load propagation -> less checks
       RUN_PASS(1, ConstantFolding, foldAll);
+      RUN_PASS(2, SELFolding, run);
       RUN_PASS(1, DeadCodeElim, buryAll);
    }
    RUN_PASS(1, LoadPropagation, run);
