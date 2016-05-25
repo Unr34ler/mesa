@@ -893,10 +893,17 @@ insnCheckCommutationDefDef(const Instruction *a, const Instruction *b)
 bool
 Instruction::isCommutationLegal(const Instruction *i) const
 {
-   bool ret = insnCheckCommutationDefDef(this, i);
-   ret = ret && insnCheckCommutationDefSrc(this, i);
+   bool ret = !i->dependsOn(this);
    ret = ret && insnCheckCommutationDefSrc(i, this);
    return ret;
+}
+
+bool
+Instruction::dependsOn(const Instruction *i) const
+{
+   bool ret = insnCheckCommutationDefDef(this, i);
+   ret = ret && insnCheckCommutationDefSrc(i, this);
+   return !ret;
 }
 
 TexInstruction::TexInstruction(Function *fn, operation op)

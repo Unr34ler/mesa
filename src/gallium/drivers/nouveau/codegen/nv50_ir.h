@@ -828,6 +828,7 @@ public:
    bool isDead() const;
    bool isNop() const;
    bool isCommutationLegal(const Instruction *) const; // must be adjacent !
+   bool dependsOn(const Instruction *) const; // weaker form of isCommutationLegal
    bool isActionEqual(const Instruction *) const;
    bool isResultEqual(const Instruction *) const;
 
