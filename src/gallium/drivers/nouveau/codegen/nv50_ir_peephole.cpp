@@ -3892,6 +3892,55 @@ LiveOnlyTex::checkDeps(Instruction *insn)
 
 // =============================================================================
 
+class VotePass : public Pass
+{
+private:
+   virtual bool visit(BasicBlock *);
+
+   BuildUtil bld;
+};
+
+bool
+VotePass::visit(BasicBlock *bb)
+{
+   if (bb->getPhi() || !bb->getEntry())
+      return true;
+
+   int count = 0;
+   Value *pred = NULL;
+   CondCode cc;
+   for (Instruction *insn = bb->getEntry(); insn; insn = insn->next) {
+      if (!insn->isPredicated() || insn->op == OP_BRA)
+         return true;
+      if (!pred) {
+         pred = insn->getPredicate();
+         cc = insn->cc;
+      } else if (pred != insn->getPredicate() || cc != insn->cc)
+         return true;
+      ++count;
+   }
+
+   if (count < 6)
+      return true;
+
+   bld.setPosition(bb, false);
+
+   Value *newPred = bld.getScratch(1, FILE_PREDICATE);
+   newPred->reg.data.id = pred->reg.data.id + 1;
+
+   Instruction *bra = bld.mkFlow(OP_BRA, BasicBlock::get(bb->cfg.outgoing().getNode()), CC_NOT_P, newPred);
+
+   Instruction *vote = bld.mkOp1(OP_VOTE, TYPE_NONE, newPred, pred);
+   if (cc == CC_NOT_P)
+      vote->src(0).mod = Modifier(NV50_IR_MOD_NOT);
+   vote->subOp = NV50_IR_SUBOP_VOTE_ANY;
+
+   bb->splitAfter(bra);
+   return true;
+}
+
+// =============================================================================
+
 #define RUN_PASS(l, n, f)                       \
    if (level >= (l)) {                          \
       if (dbgFlags & NV50_IR_DEBUG_VERBOSE)     \
@@ -3931,6 +3980,7 @@ bool
 Program::optimizePostRA(int level)
 {
    RUN_PASS(2, FlatteningPass, run);
+//   RUN_PASS(2, VotePass, run);
    if (getTarget()->getChipset() < NVISA_GK20A_CHIPSET)
       RUN_PASS(2, NV50PostRaConstantFolding, run);
    // should be last
