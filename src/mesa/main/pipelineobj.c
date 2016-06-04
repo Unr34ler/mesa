@@ -926,9 +926,9 @@ _mesa_validate_program_pipeline(struct gl_context* ctx,
     *      that doesn't have an exact match (see section 7.4.1)
     *
     * Based on this, only perform the most-strict checking on ES or when the
-    * application has created a debug context.
+    * use enables it via MESA_DEBUG.
     */
-   if ((_mesa_is_gles(ctx) || (ctx->Const.ContextFlags & GL_CONTEXT_FLAG_DEBUG_BIT)) &&
+   if ((_mesa_is_gles(ctx) || (MESA_DEBUG_FLAGS & DEBUG_VALIDATE_IO)) &&
        !_mesa_validate_pipeline_io(pipe))
       return GL_FALSE;
 
